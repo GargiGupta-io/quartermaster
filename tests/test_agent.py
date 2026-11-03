@@ -9,6 +9,7 @@ from procurement_agent.agent import MAX_DRAFT_ATTEMPTS, MAX_TOOL_ROUNDS, Procure
 from procurement_agent.config import Settings
 from procurement_agent.knowledge import KnowledgeBase
 from procurement_agent.llm import LLMError, LLMReply, ToolCall
+from procurement_agent.prompts import JUDGE
 from procurement_agent.tools import ToolBox
 
 PARSED = {
@@ -61,8 +62,19 @@ class ScriptedLLM:
     def __init__(self, *replies):
         self.replies = list(replies)
         self.requests = []
+        self.judged = []
+        self.verdicts = []
 
     def complete(self, messages, tools=None, json_mode=False):
+        if messages and messages[0]["content"] == JUDGE:
+            self.judged.append(messages)
+            verdict = self.verdicts.pop(0) if self.verdicts else None
+            if isinstance(verdict, Exception):
+                raise verdict
+            if verdict is None:
+                count = len(json.loads(messages[1]["content"])["statements"])
+                verdict = {"results": [{"index": i, "supported": True} for i in range(count)]}
+            return as_json(verdict)
         self.requests.append({"messages": messages, "tools": tools, "json_mode": json_mode})
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
@@ -109,7 +121,7 @@ def test_full_purchase_takes_figures_from_code(run):
     assert response.stock.purchase_quantity == 16
     assert response.reasons[0].citations == ["POL-001 section 1.2"]
     assert response.tools_used == ["search_policies", "check_stock"]
-    assert response.tokens_used == 50
+    assert response.tokens_used == 60
     assert llm.replies == []
 
 

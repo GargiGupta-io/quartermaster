@@ -1,20 +1,32 @@
 """The workflow: understand the request, investigate with tools, then draft a decision."""
 
 import json
+import uuid
 from typing import Any, TypedDict
 
+from langchain_core.runnables import RunnableConfig
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command, interrupt
 from pydantic import BaseModel, ValidationError
 
-from procurement_agent import prompts
-from procurement_agent.knowledge import KnowledgeBase
+from procurement_agent import prompts, verify
+from procurement_agent.knowledge import KnowledgeBase, load_passages
 from procurement_agent.llm import LLMClient, LLMError
 from procurement_agent.rules import offices, plan_stock
-from procurement_agent.schemas import Draft, ParsedRequest, ProcurementResponse, Reason
+from procurement_agent.schemas import (
+    Decision,
+    Draft,
+    ParsedRequest,
+    ProcurementResponse,
+    Reason,
+    VerificationResult,
+)
 from procurement_agent.tools import ToolBox
 
 MAX_TOOL_ROUNDS = 8
 MAX_DRAFT_ATTEMPTS = 3
+MAX_CHECK_ATTEMPTS = 2  # the plan's "retry once": a first draft and one correction
 SEARCH_RESULTS = 4
 READ_ONLY_TOOLS = (
     "check_stock",
@@ -23,6 +35,14 @@ READ_ONLY_TOOLS = (
     "get_exchange_rate",
     "evaluate_order",
 )
+
+
+class NotWaitingForApproval(Exception):
+    """A decision arrived for a request that is not waiting for one."""
+
+
+def _config(thread_id: str) -> dict:
+    return {"configurable": {"thread_id": thread_id}}
 
 
 class SearchInput(BaseModel):
@@ -49,7 +69,11 @@ class AgentState(TypedDict, total=False):
     evidence: dict[str, str]
     tool_log: list[dict]
     tokens: int
-    response: dict
+    response: dict | None
+    decisions: list[dict]
+    approved_roles: list[str]
+    justification: str
+    approval_error: str | None
 
 
 def _strip_titles(schema: Any) -> Any:
@@ -79,10 +103,13 @@ class ProcurementAgent:
                 *(toolbox.tools[name].schema() for name in READ_ONLY_TOOLS),
             )
         ]
-        self.graph = self._build().compile(checkpointer=checkpointer)
+        self._passages = {p.citation: p for p in load_passages()}
+        self.graph = self._build().compile(checkpointer=checkpointer or InMemorySaver())
 
-    def run(self, request_text: str, config: dict | None = None) -> ProcurementResponse:
-        state = self.graph.invoke(
+    def run(self, request_text: str, thread_id: str | None = None) -> ProcurementResponse:
+        """Start a request. It stops at the first approval, if one is needed."""
+        config = _config(thread_id or str(uuid.uuid4()))
+        self.graph.invoke(
             {
                 "request_text": request_text,
                 "messages": [],
@@ -91,22 +118,64 @@ class ProcurementAgent:
                 "evidence": {},
                 "tool_log": [],
                 "tokens": 0,
+                "decisions": [],
+                "approved_roles": [],
+                "justification": "",
+                "approval_error": None,
             },
-            config or {},
+            config,
         )
-        return ProcurementResponse(**state["response"])
+        return self.view(config)
+
+    def decide(self, thread_id: str, decision: Decision) -> ProcurementResponse:
+        """Record one person's decision and carry on from where the request stopped."""
+        config = _config(thread_id)
+        if not self.is_waiting(thread_id):
+            raise NotWaitingForApproval(f"Request {thread_id} is not waiting for a decision.")
+        self.graph.invoke(Command(resume=decision.model_dump()), config)
+        return self.view(config)
+
+    def is_waiting(self, thread_id: str) -> bool:
+        return "approval" in self.graph.get_state(_config(thread_id)).next
+
+    def get(self, thread_id: str) -> ProcurementResponse | None:
+        config = _config(thread_id)
+        if not self.graph.get_state(config).values:
+            return None
+        return self.view(config)
+
+    def view(self, config: dict) -> ProcurementResponse:
+        snapshot = self.graph.get_state(config)
+        values = snapshot.values
+        response = ProcurementResponse(**values["response"])
+        response.decisions = [Decision(**d) for d in values.get("decisions", [])]
+        response.approval_error = values.get("approval_error")
+        if "approval" in snapshot.next and response.order:
+            approved = values.get("approved_roles", [])
+            response.pending_approvers = [
+                role for role in response.order.required_approvers if role not in approved
+            ]
+        return response
 
     def _build(self) -> StateGraph:
         graph = StateGraph(AgentState)
         graph.add_node("understand", self._guarded(self._understand))
         graph.add_node("investigate", self._guarded(self._investigate))
         graph.add_node("draft", self._guarded(self._draft))
+        graph.add_node("check", self._guarded(self._check))
+        graph.add_node("approval", self._approval)
+        graph.add_node("create_order", self._create_order)
         graph.add_edge(START, "understand")
         graph.add_conditional_edges(
-            "understand", lambda s: END if "response" in s else "investigate"
+            "understand", lambda s: END if s.get("response") else "investigate"
         )
         graph.add_conditional_edges("investigate", self._after_investigate)
-        graph.add_conditional_edges("draft", lambda s: END if "response" in s else "draft")
+        graph.add_conditional_edges("draft", lambda s: "check" if s.get("response") else "draft")
+        graph.add_conditional_edges("check", self._after_check)
+        graph.add_conditional_edges("approval", self._after_approval)
+        graph.add_conditional_edges(
+            "create_order", lambda s: END if s["response"]["status"] == "ordered" else "approval"
+        )
         return graph
 
     def _guarded(self, node):
@@ -244,7 +313,7 @@ class ProcurementAgent:
         return {}
 
     def _after_investigate(self, state: AgentState) -> str:
-        if "response" in state:
+        if state.get("response"):
             return END
         last = state["messages"][-1]
         return "investigate" if last.get("role") == "tool" else "draft"
@@ -286,8 +355,12 @@ class ProcurementAgent:
         try:
             draft = Draft.model_validate_json(reply.content or "")
         except ValidationError:
-            return self._retry_or_fail(current, "Your last reply was not valid JSON in the format.")
-        return self._apply_rules(current, draft)
+            outcome = self._retry_or_fail(
+                current, "Your last reply was not valid JSON in the format."
+            )
+        else:
+            outcome = self._apply_rules(current, draft)
+        return {"tokens": current["tokens"], "draft_attempts": attempts} | outcome
 
     def _retry_or_fail(self, state: AgentState, problem: str) -> dict:
         if state["draft_attempts"] >= MAX_DRAFT_ATTEMPTS:
@@ -390,6 +463,184 @@ class ProcurementAgent:
                 reasons=reasons,
             )
         }
+
+    def _check(self, state: AgentState) -> dict:
+        """Check the draft's words, retry once on failure, then flag it for a person."""
+        response = ProcurementResponse(**state["response"])
+        if response.status in ("failed", "needs_clarification"):
+            return {}
+
+        words = " ".join([response.summary, *(reason.statement for reason in response.reasons)])
+        facts = {
+            "request_text": state["request_text"],
+            "request": state["parsed"],
+            "stock": response.stock.model_dump() if response.stock else None,
+            "order": response.order.model_dump() if response.order else None,
+            "tools": [e["result"] for e in state["tool_log"] if e["tool"] != "search_policies"],
+        }
+        cited_text = [
+            self._passages[c].text
+            for r in response.reasons
+            for c in r.citations
+            if c in self._passages
+        ]
+        checks = [
+            verify.check_numbers(words, [facts, cited_text]),
+            verify.check_citations(response.reasons, self._passages),
+            verify.check_vendors(words, self.toolbox.data),
+        ]
+        tokens = state["tokens"]
+        if all(check.passed for check in checks):
+            support, used = verify.check_support(
+                self.llm,
+                response.reasons,
+                self._passages,
+                {k: v for k, v in facts.items() if k in ("request", "stock", "order")},
+            )
+            checks.append(support)
+            tokens += used
+        result = verify.Verification(passed=all(c.passed for c in checks), checks=checks)
+
+        if not result.passed and state["draft_attempts"] < MAX_CHECK_ATTEMPTS:
+            return {
+                "response": None,
+                "tokens": tokens,
+                "correction": f"Your last answer failed checking: {result.problems} "
+                "Correct it using only the evidence.",
+            }
+
+        response.verification = VerificationResult(**result.model_dump())
+        response.tokens_used = tokens
+        response.policy_basis = verify.policy_basis(
+            response.stock, response.order, self.toolbox.data
+        )
+        parsed = ParsedRequest(**state["parsed"])
+        if parsed.budget_inr and response.order and response.order.total_inr > parsed.budget_inr:
+            response.warnings.append(
+                f"The total of ₹{response.order.total_inr:,.2f} is over the requester's stated "
+                f"budget of ₹{parsed.budget_inr:,.2f}."
+            )
+        if not result.passed:
+            response.warnings.append(f"Failed automatic checking: {result.problems}")
+            response.status = "needs_review"
+            if not response.order:
+                response.summary = (
+                    "This answer could not be verified and needs a person to review it. "
+                    + response.summary
+                )
+        return {"response": response.model_dump(), "tokens": tokens}
+
+    def _after_check(self, state: AgentState) -> str:
+        response = state.get("response")
+        if not response:
+            return "draft"
+        if response["status"] in ("ready_for_approval", "needs_review") and response["order"]:
+            return "approval"
+        return END
+
+    def _approval(self, state: AgentState) -> dict:
+        """Pause until a person decides. The pause is saved, so it survives a restart."""
+        order = state["response"]["order"]
+        approved = state["approved_roles"]
+        pending = [role for role in order["required_approvers"] if role not in approved]
+        decision = Decision(**interrupt({"pending_approvers": pending}))
+
+        if decision.role not in pending:
+            return {
+                "approval_error": f"{decision.role} is not an outstanding approver. "
+                f"Waiting for: {', '.join(pending)}."
+            }
+        decisions = [*state["decisions"], decision.model_dump()]
+        if decision.action == "reject":
+            response = {**state["response"], "status": "rejected"}
+            return {"decisions": decisions, "response": response, "approval_error": None}
+        if decision.action == "edit":
+            return self._apply_edit(state, decision, decisions)
+
+        justification = decision.justification or state["justification"]
+        reason = justification or (state["parsed"].get("business_reason") or "")
+        if order["justification_required"] and not reason.strip():
+            needed = " ".join(order["justification_required"])
+            return {"approval_error": f"A justification is required to approve this: {needed}"}
+        return {
+            "decisions": decisions,
+            "approved_roles": [*approved, decision.role],
+            "justification": reason,
+            "approval_error": None,
+        }
+
+    def _apply_edit(self, state: AgentState, decision: Decision, decisions: list[dict]) -> dict:
+        """Changing an order recalculates it and restarts approval, as people approved the old one."""
+        order = state["response"]["order"]
+        parsed = state["parsed"]
+        quantity = decision.requested_quantity or order["stock"]["requested"]
+        vendor_id = decision.vendor_id or order["vendor_id"]
+        fx_rate = self._latest_fx_rate(state)
+        if fx_rate is None and self._bills_in_foreign_currency(vendor_id):
+            rate = self.toolbox.run("get_exchange_rate", {"currency": "USD"})
+            if not rate.ok:
+                return {"approval_error": f"Exchange rate unavailable: {rate.error}"}
+            fx_rate = rate.data["rate"]
+        result = self.toolbox.run(
+            "evaluate_order",
+            {
+                "sku": parsed["sku"],
+                "vendor_id": vendor_id,
+                "requested_quantity": quantity,
+                "office": parsed["office"],
+                "department": parsed["department"],
+                "fx_rate": fx_rate,
+            },
+        )
+        if not result.ok:
+            return {"approval_error": f"That edit is not possible: {result.error}"}
+        new_order = result.data
+        if new_order["blocking_problems"]:
+            problems = " ".join(new_order["blocking_problems"])
+            return {"approval_error": f"That edit breaks policy: {problems}"}
+        if new_order["stock"]["purchase_quantity"] == 0:
+            return {"approval_error": "That edit needs no purchase, so reject the request instead."}
+        response = {**state["response"], "order": new_order, "stock": new_order["stock"]}
+        return {
+            "decisions": decisions,
+            "response": response,
+            "approved_roles": [],
+            "approval_error": None,
+        }
+
+    def _after_approval(self, state: AgentState) -> str:
+        response = state["response"]
+        if response["status"] == "rejected":
+            return END
+        required = response["order"]["required_approvers"]
+        if all(role in state["approved_roles"] for role in required):
+            return "create_order"
+        return "approval"
+
+    def _create_order(self, state: AgentState, config: RunnableConfig) -> dict:
+        """Only reachable after every approval. The rules are checked once more by the tool."""
+        response = state["response"]
+        order = response["order"]
+        result = self.toolbox.run(
+            "create_purchase_order",
+            {
+                "sku": state["parsed"]["sku"],
+                "vendor_id": order["vendor_id"],
+                "requested_quantity": order["stock"]["requested"],
+                "office": state["parsed"]["office"],
+                "department": state["parsed"]["department"],
+                "fx_rate": order["fx_rate"],
+                "idempotency_key": config["configurable"]["thread_id"],
+                "approved_by": state["approved_roles"],
+                "justification": state["justification"],
+            },
+        )
+        if not result.ok:
+            return {
+                "approved_roles": [],
+                "approval_error": f"The order could not be created: {result.error}",
+            }
+        return {"response": {**response, "status": "ordered", "purchase_order": result.data}}
 
     def _bills_in_foreign_currency(self, vendor_id: str) -> bool:
         return any(v.id == vendor_id and v.currency != "INR" for v in self.toolbox.data.vendors)

@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field
 from procurement_agent.rules import OrderEvaluation, StockPlan
 
 Status = Literal[
-    "ready_for_approval", "no_purchase_needed", "needs_clarification", "refused", "failed"
+    "ready_for_approval",
+    "needs_review",
+    "no_purchase_needed",
+    "needs_clarification",
+    "refused",
+    "failed",
+    "rejected",
+    "ordered",
 ]
 
 
@@ -37,6 +44,35 @@ class Draft(BaseModel):
     reasons: list[Reason] = []
 
 
+class PolicyBasis(BaseModel):
+    citation: str
+    heading: str
+    text: str
+
+
+class CheckResult(BaseModel):
+    name: str
+    passed: bool
+    detail: str = ""
+
+
+class VerificationResult(BaseModel):
+    passed: bool
+    checks: list[CheckResult]
+
+
+class Decision(BaseModel):
+    """One person's decision on a request, kept as the audit trail."""
+
+    role: str
+    action: Literal["approve", "reject", "edit"]
+    name: str = Field(min_length=1)
+    note: str = ""
+    justification: str = ""
+    vendor_id: str | None = None
+    requested_quantity: int | None = Field(default=None, gt=0)
+
+
 class ProcurementResponse(BaseModel):
     status: Status
     summary: str
@@ -44,6 +80,13 @@ class ProcurementResponse(BaseModel):
     stock: StockPlan | None = None
     order: OrderEvaluation | None = None
     reasons: list[Reason] = []
+    policy_basis: list[PolicyBasis] = []
+    verification: VerificationResult | None = None
+    warnings: list[str] = []
     questions: list[str] = []
+    pending_approvers: list[str] = []
+    decisions: list[Decision] = []
+    approval_error: str | None = None
+    purchase_order: dict | None = None
     tools_used: list[str] = []
     tokens_used: int = 0
