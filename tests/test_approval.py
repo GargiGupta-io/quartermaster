@@ -94,10 +94,10 @@ def test_edit_recalculates_and_restarts_approval(knowledge, toolbox):
     agent, _, _ = start(knowledge, toolbox)
     agent.decide(THREAD, approve(HEAD))
     edited = agent.decide(
-        THREAD, Decision(role=FINANCE, action="edit", name="A", requested_quantity=10)
+        THREAD, Decision(role=FINANCE, action="edit", name="A", requested_quantity=18)
     )
-    assert edited.order.stock.purchase_quantity == 6
-    assert edited.order.total_inr == 509_760
+    assert edited.order.stock.purchase_quantity == 14
+    assert edited.order.total_inr == 1_189_440
     assert edited.pending_approvers == [HEAD, FINANCE]  # the earlier approval no longer counts
 
 
