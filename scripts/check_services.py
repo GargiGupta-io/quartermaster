@@ -38,9 +38,7 @@ def check_ai_tool_use(settings: Settings) -> str:
         headers={"Authorization": f"Bearer {settings.groq_api_key}"},
         json={
             "model": settings.groq_model,
-            "messages": [
-                {"role": "user", "content": "How many LAP-STD-14 are available in Pune?"}
-            ],
+            "messages": [{"role": "user", "content": "How many LAP-STD-14 are available in Pune?"}],
             "tools": [TOOL],
             "tool_choice": "required",
         },

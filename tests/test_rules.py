@@ -141,9 +141,7 @@ def test_engineering_laptop_outside_engineering_needs_the_cio(data):
 
 
 def test_committed_orders_reduce_the_budget(data):
-    order = evaluate_order(
-        data, "MON-27", "V-103", 13, "Pune", "Sales", committed_inr=1_000_000
-    )
+    order = evaluate_order(data, "MON-27", "V-103", 13, "Pune", "Sales", committed_inr=1_000_000)
     assert order.budget_remaining_inr == 0
     assert order.over_budget
 
