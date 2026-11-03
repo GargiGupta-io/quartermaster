@@ -228,6 +228,46 @@ def test_unknown_product_can_only_be_refused(run):
     assert response.status == "refused"
 
 
+def test_unlisted_item_is_refused_without_asking_for_details(run):
+    parsed = {"is_purchase_request": True, "item": "gift cards", "department": "Sales"}
+    response, _ = run(as_json(parsed), DONE, draft(decision="refuse", vendor=None))
+    assert response.status == "refused"
+    assert response.questions == []
+
+
+def test_invented_product_code_is_treated_as_unlisted(run):
+    parsed = PARSED | {"item": "yacht", "sku": "YACHT-1"}
+    response, _ = run(as_json(parsed), DONE, draft(decision="refuse", vendor=None))
+    assert response.status == "refused"
+    assert response.request.sku is None
+
+
+def test_ambiguous_item_asks_which_product(run):
+    parsed = PARSED | {
+        "item": "laptops",
+        "sku": None,
+        "candidate_skus": ["LAP-STD-14", "LAP-ENG-16", "NOT-REAL"],
+    }
+    response, _ = run(as_json(parsed))
+    assert response.status == "needs_clarification"
+    assert "LAP-ENG-16" in response.questions[0]
+    assert "NOT-REAL" not in response.questions[0]
+
+
+def test_refusing_a_stocked_product_is_corrected(run):
+    parsed = PARSED | {"sku": "MON-27", "office": "Mumbai", "department": "Operations"}
+    response, llm = run(
+        as_json(parsed),
+        DONE,
+        draft(decision="refuse", vendor=None),
+        draft(vendor="V-103"),
+    )
+    assert response.status == "ready_for_approval"
+    assert response.order.over_budget
+    assert "CFO" in response.order.required_approvers
+    assert "not refusal" in llm.requests[-1]["messages"][-1]["content"]
+
+
 def test_foreign_item_fetches_the_rate_if_the_model_did_not(run):
     parsed = PARSED | {"sku": "NET-SW48", "quantity": 2}
     response, _ = run(as_json(parsed), DONE, draft(vendor="V-105"))

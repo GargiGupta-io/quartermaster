@@ -159,6 +159,11 @@ class ProcurementAgent:
                 f"could not read the request details: {error.error_count()} errors"
             ) from error
 
+        known_skus = {p.sku for p in data.products}
+        if parsed.sku not in known_skus:
+            parsed.sku = None
+        parsed.candidate_skus = [sku for sku in parsed.candidate_skus if sku in known_skus]
+
         update: dict = {"parsed": parsed.model_dump(), "tokens": tokens}
         current = {**state, **update}
         if not parsed.is_purchase_request:
@@ -167,11 +172,18 @@ class ProcurementAgent:
             )
             return update
 
+        if parsed.item and not parsed.sku and not parsed.candidate_skus:
+            return update  # not a product we stock: check policy and refuse, don't ask for details
+
         known_offices = offices(data)
         known_departments = {b.department for b in data.budgets}
         questions = []
         if not parsed.item:
             questions.append("What would you like to buy?")
+        elif not parsed.sku:
+            names = {p.sku: p.name for p in data.products}
+            options = ", ".join(f"{names[sku]} ({sku})" for sku in parsed.candidate_skus)
+            questions.append(f"Which product do you mean? {options}")
         if parsed.quantity is None:
             questions.append("How many do you need?")
         if parsed.office not in known_offices:
@@ -296,6 +308,12 @@ class ProcurementAgent:
         reasons: list[Reason] = draft.reasons
         known_sku = parsed.sku in {p.sku for p in self.toolbox.data.products}
 
+        if draft.decision == "refuse" and known_sku:
+            return self._retry_or_fail(
+                state,
+                f"{parsed.sku} is a product the company buys. Going over budget or needing an "
+                "exception means extra approval, not refusal. Decide purchase or no_purchase.",
+            )
         if draft.decision == "refuse":
             return {"response": self._finish(state, "refused", draft.summary, reasons=reasons)}
         if not known_sku:

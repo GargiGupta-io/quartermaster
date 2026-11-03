@@ -15,6 +15,7 @@ class ParsedRequest(BaseModel):
     is_purchase_request: bool
     item: str | None = None
     sku: str | None = None
+    candidate_skus: list[str] = []
     quantity: int | None = Field(default=None, gt=0)
     office: str | None = None
     department: str | None = None
