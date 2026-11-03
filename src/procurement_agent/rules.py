@@ -37,6 +37,7 @@ class StockPlan(BaseModel):
 class OrderEvaluation(BaseModel):
     stock: StockPlan
     vendor_id: str
+    vendor_name: str
     currency: str
     unit_price: float
     fx_rate: float | None
@@ -206,6 +207,7 @@ def evaluate_order(
     return OrderEvaluation(
         stock=stock,
         vendor_id=vendor_id,
+        vendor_name=vendor.name,
         currency=vendor.currency,
         unit_price=offer.unit_price,
         fx_rate=fx_rate if foreign else None,

@@ -49,6 +49,7 @@ def test_flagship_order(data):
     order = evaluate_order(data, "LAP-STD-14", "V-101", 20, "Pune", "Engineering")
     assert order.stock.from_local_stock == 4
     assert order.stock.purchase_quantity == 16
+    assert order.vendor_name == "Sahyadri IT Supplies"
     assert order.subtotal_inr == 1_152_000
     assert order.gst_inr == 207_360
     assert order.total_inr == 1_359_360

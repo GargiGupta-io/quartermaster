@@ -131,7 +131,7 @@ function render(view) {
   }
   if (o) {
     parts.push(`<h3>Proposed order</h3><div class="figures">
-      <div><b>${esc(o.vendor_id)}</b><span>Vendor</span></div>
+      <div><b>${esc(o.vendor_name)}</b><span>Vendor ${esc(o.vendor_id)}</span></div>
       <div><b>${inr(o.unit_price_inr)}</b><span>Per unit, before GST</span></div>
       <div><b>${inr(o.total_inr)}</b><span>Total with GST</span></div>
       <div><b>${inr(o.budget_remaining_inr)}</b><span>Department budget left</span></div>
