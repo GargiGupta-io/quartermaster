@@ -1,0 +1,9 @@
+[
+  {"office": "Pune", "sku": "LAP-STD-14", "on_hand": 6, "reserved": 2},
+  {"office": "Pune", "sku": "LAP-ENG-16", "on_hand": 1, "reserved": 1},
+  {"office": "Pune", "sku": "MON-27", "on_hand": 12, "reserved": 0},
+  {"office": "Mumbai", "sku": "LAP-STD-14", "on_hand": 0, "reserved": 0},
+  {"office": "Mumbai", "sku": "DOCK-USBC", "on_hand": 3, "reserved": 1},
+  {"office": "Bengaluru", "sku": "LAP-STD-14", "on_hand": 15, "reserved": 3},
+  {"office": "Bengaluru", "sku": "CHR-ERG", "on_hand": 20, "reserved": 5}
+]

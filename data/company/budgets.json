@@ -1,0 +1,6 @@
+[
+  {"department": "Engineering", "allocated": 6000000, "spent": 3100000, "committed": 950000},
+  {"department": "Operations", "allocated": 1200000, "spent": 840000, "committed": 120000},
+  {"department": "Sales", "allocated": 1800000, "spent": 600000, "committed": 200000},
+  {"department": "HR", "allocated": 800000, "spent": 250000, "committed": 50000}
+]

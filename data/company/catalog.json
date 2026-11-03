@@ -1,0 +1,19 @@
+[
+  {"sku": "LAP-STD-14", "vendor_id": "V-101", "unit_price": 72000, "lead_time_days": 7},
+  {"sku": "LAP-STD-14", "vendor_id": "V-102", "unit_price": 74500, "lead_time_days": 10},
+  {"sku": "LAP-STD-14", "vendor_id": "V-103", "unit_price": 76000, "lead_time_days": 5},
+  {"sku": "LAP-STD-14", "vendor_id": "V-104", "unit_price": 69500, "lead_time_days": 6},
+  {"sku": "LAP-STD-14", "vendor_id": "V-105", "unit_price": 790, "lead_time_days": 21},
+  {"sku": "LAP-STD-14", "vendor_id": "V-106", "unit_price": 61000, "lead_time_days": 3},
+  {"sku": "LAP-ENG-16", "vendor_id": "V-101", "unit_price": 128000, "lead_time_days": 10},
+  {"sku": "LAP-ENG-16", "vendor_id": "V-102", "unit_price": 131500, "lead_time_days": 12},
+  {"sku": "LAP-PRO-16", "vendor_id": "V-101", "unit_price": 165000, "lead_time_days": 14},
+  {"sku": "MON-27", "vendor_id": "V-101", "unit_price": 19500, "lead_time_days": 5},
+  {"sku": "MON-27", "vendor_id": "V-103", "unit_price": 18800, "lead_time_days": 4},
+  {"sku": "MON-27", "vendor_id": "V-104", "unit_price": 17900, "lead_time_days": 6},
+  {"sku": "DOCK-USBC", "vendor_id": "V-102", "unit_price": 9800, "lead_time_days": 6},
+  {"sku": "DOCK-USBC", "vendor_id": "V-103", "unit_price": 10200, "lead_time_days": 4},
+  {"sku": "CHR-ERG", "vendor_id": "V-103", "unit_price": 14500, "lead_time_days": 8},
+  {"sku": "CHR-ERG", "vendor_id": "V-104", "unit_price": 13900, "lead_time_days": 9},
+  {"sku": "NET-SW48", "vendor_id": "V-105", "unit_price": 2150, "lead_time_days": 28}
+]

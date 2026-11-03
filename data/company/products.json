@@ -1,0 +1,9 @@
+[
+  {"sku": "LAP-STD-14", "name": "Standard 14-inch laptop"},
+  {"sku": "LAP-ENG-16", "name": "Engineering 16-inch laptop"},
+  {"sku": "LAP-PRO-16", "name": "Pro 16-inch laptop"},
+  {"sku": "MON-27", "name": "27-inch monitor"},
+  {"sku": "DOCK-USBC", "name": "USB-C dock"},
+  {"sku": "CHR-ERG", "name": "Ergonomic office chair"},
+  {"sku": "NET-SW48", "name": "48-port network switch"}
+]

@@ -1,0 +1,8 @@
+[
+  {"id": "V-101", "name": "Sahyadri IT Supplies", "status": "approved", "currency": "INR", "serves": ["Pune", "Mumbai", "Bengaluru"]},
+  {"id": "V-102", "name": "Deccan Compute Traders", "status": "approved", "currency": "INR", "serves": ["Pune", "Bengaluru"]},
+  {"id": "V-103", "name": "Konkan Office Systems", "status": "approved", "currency": "INR", "serves": ["Pune", "Mumbai"]},
+  {"id": "V-104", "name": "Lotus Peak Technologies", "status": "probation", "currency": "INR", "serves": ["Pune", "Bengaluru"]},
+  {"id": "V-105", "name": "BlueMarine Imports", "status": "approved", "currency": "USD", "serves": ["Pune", "Mumbai", "Bengaluru"]},
+  {"id": "V-106", "name": "Quickline Resellers", "status": "suspended", "currency": "INR", "serves": ["Pune", "Mumbai", "Bengaluru"]}
+]
