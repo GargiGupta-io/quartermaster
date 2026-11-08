@@ -110,7 +110,7 @@ def run(knowledge, toolbox):
 def test_full_purchase_takes_figures_from_code(run):
     response, llm = run(
         as_json(PARSED),
-        calls(("search_policies", {"query": "stock first"})),
+        calls(("search_documents", {"query": "stock first"})),
         calls(("check_stock", PARSED | {"requested_quantity": 20})),
         DONE,
         draft(total_inr=1, required_approvers=["Nobody"]),
@@ -120,7 +120,7 @@ def test_full_purchase_takes_figures_from_code(run):
     assert response.order.required_approvers == ["Department Head", "Finance Controller"]
     assert response.stock.purchase_quantity == 16
     assert response.reasons[0].citations == ["POL-001 section 1.2"]
-    assert response.tools_used == ["search_policies", "check_stock"]
+    assert response.tools_used == ["search_documents", "check_stock"]
     assert response.tokens_used == 60
     assert llm.replies == []
 
@@ -129,7 +129,7 @@ def test_the_model_is_never_offered_purchase_order_creation(run):
     _, llm = run(as_json(PARSED), DONE, draft())
     offered = [t["function"]["name"] for t in llm.requests[1]["tools"]]
     assert "create_purchase_order" not in offered
-    assert "search_policies" in offered
+    assert "search_documents" in offered
 
 
 def test_a_requested_purchase_order_tool_call_is_refused(run, toolbox):
@@ -308,3 +308,77 @@ def test_model_failures_end_cleanly_with_no_order(run, replies):
     response, _ = run(*replies)
     assert response.status == "failed"
     assert response.order is None
+
+
+QUESTION = {"is_purchase_request": False, "is_question": True, "item": None}
+WARRANTY_QUESTION = "How long is the warranty on Lotus Peak laptops?"
+
+
+def answer(reasons, found=True, text="Lotus Peak laptops carry a 24-month on-site warranty."):
+    return as_json({"found": found, "answer": text, "reasons": reasons})
+
+
+WARRANTY_REASON = [
+    {"statement": "Laptops carry a 24-month on-site warranty.", "citations": ["CON-104 page 2"]}
+]
+
+
+def test_question_is_answered_from_a_cited_document(run):
+    response, llm = run(as_json(QUESTION), answer(WARRANTY_REASON), text=WARRANTY_QUESTION)
+    assert response.status == "answered"
+    assert "24-month" in response.summary
+    assert response.tools_used == ["search_documents"]
+    assert [(s.citation, s.source_type) for s in response.sources] == [("CON-104 page 2", "PDF")]
+    assert response.verification.passed
+    assert len(llm.judged) == 1  # the support check still runs
+    assert llm.requests[1]["tools"] is None  # answering is not offered any tools
+
+
+def test_question_evidence_comes_from_the_search(run):
+    _, llm = run(as_json(QUESTION), answer(WARRANTY_REASON), text=WARRANTY_QUESTION)
+    prompt = llm.requests[1]["messages"][0]["content"]
+    assert "CON-104 page 2" in prompt
+    assert "POL-" in prompt  # policy sections are always searched too
+
+
+def test_question_the_documents_do_not_cover(run):
+    response, llm = run(
+        as_json(QUESTION),
+        answer([], found=False, text="Probably 3 years."),
+        text="What is the CEO's favourite colour?",
+    )
+    assert response.status == "answered"
+    assert response.summary.startswith("The company documents do not answer this.")
+    assert "3 years" not in response.summary  # a guess is never shown
+    assert llm.judged == []
+
+
+def test_answer_with_an_invented_citation_is_corrected(run):
+    invented = [
+        {"statement": "Laptops carry a 24-month warranty.", "citations": ["CON-104 page 9"]}
+    ]
+    response, llm = run(
+        as_json(QUESTION), answer(invented), answer(WARRANTY_REASON), text=WARRANTY_QUESTION
+    )
+    assert response.status == "answered"
+    correction = llm.requests[2]["messages"][1]["content"]
+    assert "CON-104 page 9" in correction
+
+
+def test_answer_with_an_invented_figure_goes_to_review(run):
+    wrong = "Lotus Peak laptops carry a 36-month on-site warranty."
+    response, _ = run(
+        as_json(QUESTION),
+        answer(WARRANTY_REASON, text=wrong),
+        answer(WARRANTY_REASON, text=wrong),
+        text=WARRANTY_QUESTION,
+    )
+    assert response.status == "needs_review"
+    assert any("36" in w for w in response.warnings)
+
+
+def test_something_that_is_neither_a_purchase_nor_a_question_is_refused(run):
+    response, _ = run(
+        as_json({"is_purchase_request": False, "is_question": False}), text="Write me a poem"
+    )
+    assert response.status == "refused"

@@ -15,6 +15,7 @@ from procurement_agent.knowledge import KnowledgeBase, load_passages
 from procurement_agent.llm import LLMClient, LLMError
 from procurement_agent.rules import offices, plan_stock
 from procurement_agent.schemas import (
+    Answer,
     Decision,
     Draft,
     ParsedRequest,
@@ -27,7 +28,8 @@ from procurement_agent.tools import ToolBox
 MAX_TOOL_ROUNDS = 8
 MAX_DRAFT_ATTEMPTS = 3
 MAX_CHECK_ATTEMPTS = 2  # the plan's "retry once": a first draft and one correction
-SEARCH_RESULTS = 4
+POLICY_RESULTS = 3  # plus DOCUMENT_RESULTS from contracts, memos, emails and records
+DOCUMENT_RESULTS = 2
 READ_ONLY_TOOLS = (
     "check_stock",
     "list_vendor_offers",
@@ -49,11 +51,15 @@ class SearchInput(BaseModel):
     query: str
 
 
+SEARCH_TOOL = "search_documents"
 SEARCH_SCHEMA = {
     "type": "function",
     "function": {
-        "name": "search_policies",
-        "description": "Search company policy documents. Returns sections with their citations.",
+        "name": SEARCH_TOOL,
+        "description": (
+            "Search company documents: policies, contracts, memos, emails, the vendor rate card "
+            "and vendor records. Returns passages with their citations."
+        ),
         "parameters": SearchInput.model_json_schema(),
     },
 }
@@ -161,14 +167,14 @@ class ProcurementAgent:
         graph = StateGraph(AgentState)
         graph.add_node("understand", self._guarded(self._understand))
         graph.add_node("investigate", self._guarded(self._investigate))
+        graph.add_node("answer", self._guarded(self._answer))
         graph.add_node("draft", self._guarded(self._draft))
         graph.add_node("check", self._guarded(self._check))
         graph.add_node("approval", self._approval)
         graph.add_node("create_order", self._create_order)
         graph.add_edge(START, "understand")
-        graph.add_conditional_edges(
-            "understand", lambda s: END if s.get("response") else "investigate"
-        )
+        graph.add_conditional_edges("understand", self._after_understand)
+        graph.add_conditional_edges("answer", self._after_answer)
         graph.add_conditional_edges("investigate", self._after_investigate)
         graph.add_conditional_edges("draft", lambda s: "check" if s.get("response") else "draft")
         graph.add_conditional_edges("check", self._after_check)
@@ -236,9 +242,12 @@ class ProcurementAgent:
         update: dict = {"parsed": parsed.model_dump(), "tokens": tokens}
         current = {**state, **update}
         if not parsed.is_purchase_request:
-            update["response"] = self._finish(
-                current, "refused", "This assistant only handles purchase requests."
-            )
+            if not parsed.is_question:
+                update["response"] = self._finish(
+                    current,
+                    "refused",
+                    "This assistant handles purchase requests and questions about procurement.",
+                )
             return update
 
         if parsed.item and not parsed.sku and not parsed.candidate_skus:
@@ -268,6 +277,65 @@ class ProcurementAgent:
                 "A few details are needed before this can be checked.",
                 questions=questions,
             )
+        return update
+
+    @staticmethod
+    def _is_question(state: AgentState) -> bool:
+        parsed = state.get("parsed") or {}
+        return bool(parsed.get("is_question")) and not parsed.get("is_purchase_request")
+
+    def _after_understand(self, state: AgentState) -> str:
+        if state.get("response"):
+            return END
+        return "answer" if self._is_question(state) else "investigate"
+
+    def _after_answer(self, state: AgentState) -> str:
+        response = state.get("response")
+        if not response:
+            return "answer"
+        return "check" if response["reasons"] else END
+
+    def _answer(self, state: AgentState) -> dict:
+        """A question about the documents: one search, then an answer that must cite it."""
+        question = state["request_text"]
+        tool_log = list(state["tool_log"])
+        evidence = dict(state["evidence"])
+        if not evidence:
+            result = self._call_tool(SEARCH_TOOL, {"query": question}, evidence)
+            tool_log.append(
+                {"tool": SEARCH_TOOL, "arguments": {"query": question}, "result": result}
+            )
+        system = prompts.ANSWER.format(question=question, evidence=json.dumps(evidence))
+        messages = [{"role": "system", "content": system}]
+        messages.append({"role": "user", "content": state.get("correction") or "Answer as JSON."})
+        reply = self.llm.complete(messages, json_mode=True)
+        attempts = state["draft_attempts"] + 1
+        current = {
+            **state,
+            "evidence": evidence,
+            "tool_log": tool_log,
+            "tokens": state["tokens"] + reply.tokens,
+            "draft_attempts": attempts,
+        }
+        update = {k: current[k] for k in ("evidence", "tool_log", "tokens", "draft_attempts")}
+        try:
+            answer = Answer.model_validate_json(reply.content or "")
+        except ValidationError:
+            if attempts >= MAX_DRAFT_ATTEMPTS:
+                update["response"] = self._finish(
+                    current, "failed", "Could not produce an answer in the expected format."
+                )
+            else:
+                update["correction"] = "Your last reply was not valid JSON in the format."
+            return update
+        if not answer.found:
+            answer.reasons = []
+            answer.answer = (
+                "The company documents do not answer this. Please ask the procurement desk."
+            )
+        update["response"] = self._finish(
+            current, "answered", answer.answer, reasons=[r.model_dump() for r in answer.reasons]
+        )
         return update
 
     def _investigate(self, state: AgentState) -> dict:
@@ -319,13 +387,20 @@ class ProcurementAgent:
         return "investigate" if last.get("role") == "tool" else "draft"
 
     def _call_tool(self, name: str, arguments: dict, evidence: dict[str, str]) -> dict:
-        if name == "search_policies":
+        if name == SEARCH_TOOL:
             query = arguments.get("query", "")
-            hits = self.knowledge.search(query, k=SEARCH_RESULTS)
+            hits = self.knowledge.search_balanced(query, POLICY_RESULTS, DOCUMENT_RESULTS)
             for hit in hits:
                 evidence[hit.passage.citation] = f"{hit.passage.heading}: {hit.passage.text}"
             return {
-                "sections": [{"citation": h.passage.citation, "text": h.passage.text} for h in hits]
+                "passages": [
+                    {
+                        "citation": h.passage.citation,
+                        "source": h.passage.source_type,
+                        "text": h.passage.text,
+                    }
+                    for h in hits
+                ]
             }
         if name not in READ_ONLY_TOOLS:
             return {"ok": False, "error": f"Tool '{name}' is not available."}
@@ -333,11 +408,11 @@ class ProcurementAgent:
 
     def _draft(self, state: AgentState) -> dict:
         evidence = {
-            "policy_sections": state["evidence"],
+            "documents": state["evidence"],
             "tool_results": [
                 {"tool": e["tool"], "arguments": e["arguments"], "result": e["result"]}
                 for e in state["tool_log"]
-                if e["tool"] != "search_policies"
+                if e["tool"] != SEARCH_TOOL
             ],
         }
         system = prompts.DRAFT.format(
@@ -476,7 +551,7 @@ class ProcurementAgent:
             "request": state["parsed"],
             "stock": response.stock.model_dump() if response.stock else None,
             "order": response.order.model_dump() if response.order else None,
-            "tools": [e["result"] for e in state["tool_log"] if e["tool"] != "search_policies"],
+            "tools": [e["result"] for e in state["tool_log"] if e["tool"] != SEARCH_TOOL],
         }
         cited_text = [
             self._passages[c].text
@@ -514,6 +589,7 @@ class ProcurementAgent:
         response.policy_basis = verify.policy_basis(
             response.stock, response.order, self.toolbox.data
         )
+        response.sources = verify.sources(response.reasons, self._passages)
         parsed = ParsedRequest(**state["parsed"])
         if parsed.budget_inr and response.order and response.order.total_inr > parsed.budget_inr:
             response.warnings.append(
@@ -533,7 +609,7 @@ class ProcurementAgent:
     def _after_check(self, state: AgentState) -> str:
         response = state.get("response")
         if not response:
-            return "draft"
+            return "answer" if self._is_question(state) else "draft"
         if response["status"] in ("ready_for_approval", "needs_review") and response["order"]:
             return "approval"
         return END
