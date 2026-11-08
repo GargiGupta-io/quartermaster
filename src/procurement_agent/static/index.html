@@ -20,6 +20,7 @@
           margin-bottom:16px; }
   h2 { font-size:14px; margin:0 0 10px; }
   h3 { font-size:13px; margin:18px 0 6px; color:var(--muted); }
+  .kind { font-size:12px; color:var(--muted); border:1px solid currentColor; border-radius:4px; padding:0 5px; margin-left:4px; }
   textarea,input,select { width:100%; font:inherit; padding:8px; border:1px solid var(--line);
           border-radius:6px; background:#fff; color:var(--ink); }
   label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
@@ -76,7 +77,7 @@ const LABELS = {
   ready_for_approval: ["Waiting for approval", "caution"], needs_review: ["Needs careful review", "stop"],
   no_purchase_needed: ["No purchase needed", "ok"], needs_clarification: ["More details needed", "caution"],
   refused: ["Refused", "stop"], failed: ["Could not complete", "stop"],
-  rejected: ["Rejected", "stop"], ordered: ["Order created", "ok"],
+  rejected: ["Rejected", "stop"], ordered: ["Order created", "ok"], answered: ["Answered", "ok"],
 };
 const esc = value => String(value ?? "").replace(/[&<>"']/g,
   c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -148,6 +149,10 @@ function render(view) {
   if (r.pending_approvers.length) parts.push(decisionForm(r));
   if (r.reasons.length) {
     parts.push(`<h3>Why</h3><ul>${r.reasons.map(x => `<li>${esc(x.statement)} <span class="muted">${x.citations.map(esc).join(", ")}</span></li>`).join("")}</ul>`);
+  }
+  if ((r.sources || []).length) {
+    parts.push(`<h3>Sources used</h3>${r.sources.map(src =>
+      `<details><summary>${esc(src.citation)}: ${esc(src.title)} <span class="kind">${esc(src.source_type)}, ${src.structured ? "structured" : "unstructured"}</span></summary><p class="muted">${esc(src.text)}</p><p class="muted">File: ${esc(src.file)}</p></details>`).join("")}`);
   }
   if (r.policy_basis.length) {
     parts.push(`<h3>Policy sections that apply</h3>${r.policy_basis.map(b =>
