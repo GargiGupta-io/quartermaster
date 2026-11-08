@@ -15,11 +15,13 @@ Status = Literal[
     "failed",
     "rejected",
     "ordered",
+    "answered",
 ]
 
 
 class ParsedRequest(BaseModel):
     is_purchase_request: bool
+    is_question: bool = False
     item: str | None = None
     sku: str | None = None
     candidate_skus: list[str] = []
@@ -44,9 +46,28 @@ class Draft(BaseModel):
     reasons: list[Reason] = []
 
 
+class Answer(BaseModel):
+    """The model's answer to a question about company documents."""
+
+    found: bool
+    answer: str
+    reasons: list[Reason] = []
+
+
 class PolicyBasis(BaseModel):
     citation: str
     heading: str
+    text: str
+
+
+class Source(BaseModel):
+    """A document passage the answer relied on, so a person can open it and check."""
+
+    citation: str
+    title: str
+    source_type: str
+    structured: bool
+    file: str
     text: str
 
 
@@ -81,6 +102,7 @@ class ProcurementResponse(BaseModel):
     order: OrderEvaluation | None = None
     reasons: list[Reason] = []
     policy_basis: list[PolicyBasis] = []
+    sources: list[Source] = []
     verification: VerificationResult | None = None
     warnings: list[str] = []
     questions: list[str] = []

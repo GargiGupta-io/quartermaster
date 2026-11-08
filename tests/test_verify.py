@@ -16,6 +16,7 @@ from procurement_agent.verify import (
     check_vendors,
     numbers_in,
     policy_basis,
+    sources,
 )
 
 DATA = load_company_data()
@@ -31,6 +32,8 @@ FACTS = {"total_inr": 1_359_360.0, "unit_price_inr": 72_000.0, "quantity": 16}
         ("about 1.5 crore", [15_000_000.0]),
         ("See POL-001 section 1.2 and POL-002 2.1", []),
         ("The LAP-STD-14 and DOCK-USBC", []),
+        ("See CON-104 page 3, PRL-Q4 row 18 and EML-022 message 2", []),
+        ("See MEM-011 paragraph 4 and REG-VND record V-106", []),
         ("18% GST", [18.0]),
     ],
 )
@@ -134,3 +137,21 @@ def test_policy_basis_follows_the_facts():
 
     over = evaluate_order(DATA, "MON-27", "V-103", 20, "Mumbai", "Operations")
     assert "POL-001 section 1.3" in [b.citation for b in policy_basis(over.stock, over, DATA)]
+
+
+def test_sources_label_each_cited_document_type():
+    reasons = [
+        Reason(statement="Lotus Peak orders are capped.", citations=["CON-104 page 3"]),
+        Reason(
+            statement="Finance accepted a single supplier.",
+            citations=["EML-022 message 2", "PRL-Q4 row 18", "CON-104 page 3"],
+        ),
+        Reason(statement="Invented.", citations=["XYZ-999 page 9"]),
+    ]
+    found = sources(reasons, PASSAGES)
+    assert [(s.citation, s.source_type, s.structured) for s in found] == [
+        ("CON-104 page 3", "PDF", False),
+        ("EML-022 message 2", "Email thread", False),
+        ("PRL-Q4 row 18", "Spreadsheet", True),
+    ]
+    assert found[0].file == "CON-104-lotus-peak-supply-agreement.pdf"

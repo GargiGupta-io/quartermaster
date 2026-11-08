@@ -10,9 +10,12 @@ from procurement_agent.company_data import CompanyData
 from procurement_agent.knowledge import Passage, load_passages
 from procurement_agent.llm import LLMClient, LLMError
 from procurement_agent.rules import OrderEvaluation, StockPlan
-from procurement_agent.schemas import PolicyBasis, Reason
+from procurement_agent.schemas import PolicyBasis, Reason, Source
 
-_CITATION = re.compile(r"POL-\d{3}(?: section \d+\.\d+| \d+\.\d+)?")
+_CITATION = re.compile(
+    r"\b[A-Z]{3}-[A-Z0-9]+\b(?!-)(?: (?:section|page|row|paragraph|message|record) [A-Z0-9.-]+"
+    r"| \d+\.\d+)?"
+)
 _PRODUCT_CODE = re.compile(r"\b[A-Z]{2,}-[A-Z0-9-]+\b")
 _VENDOR_ID = re.compile(r"\bV-\d+\b")
 _NUMBER = re.compile(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s*(lakh|crore)?", re.IGNORECASE)
@@ -179,4 +182,20 @@ def policy_basis(
     return [
         PolicyBasis(citation=c, heading=by_citation[c].heading, text=by_citation[c].text)
         for c in dict.fromkeys(sections)
+    ]
+
+
+def sources(reasons: list[Reason], passages: dict[str, Passage]) -> list[Source]:
+    """Every passage the reasons cite, labelled with its document type."""
+    cited = dict.fromkeys(c for r in reasons for c in r.citations if c in passages)
+    return [
+        Source(
+            citation=c,
+            title=passages[c].doc_title,
+            source_type=passages[c].source_type,
+            structured=passages[c].structured,
+            file=passages[c].source_file,
+            text=passages[c].text,
+        )
+        for c in cited
     ]
