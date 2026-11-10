@@ -1,7 +1,7 @@
 [project]
 name = "procurement-agent"
 version = "0.1.0"
-description = "Agentic AI workflow for procurement requests, with human approval, hallucination checks and evaluation."
+description = "Quartermaster: an AI procurement assistant with human approval"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

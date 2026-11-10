@@ -1,6 +1,6 @@
-# Procurement Agent
+# Quartermaster
 
-An AI assistant that handles purchase requests the way a careful procurement officer would. It
+An AI procurement assistant that handles purchase requests the way a careful procurement officer would. It
 reads a plain-English request, checks company policy, stock, prices and budget, and prepares
 an order that the right managers approve before anything is bought. It also answers questions
 about company policies, contracts and vendors, always showing where the answer came from.
