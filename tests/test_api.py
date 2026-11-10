@@ -1,11 +1,15 @@
 """The web service, with a scripted model and temporary storage."""
 
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
 from procurement_agent.api import Service, create_app
 from procurement_agent.knowledge import KnowledgeBase
 from test_agent import DONE, PARSED, ScriptedLLM, as_json, draft
+
+KEY = "test-access-key"
 
 
 @pytest.fixture(scope="module")
@@ -16,7 +20,7 @@ def knowledge(tmp_path_factory):
 @pytest.fixture
 def setup(knowledge, tmp_path):
     llm = ScriptedLLM(as_json(PARSED), DONE, draft())
-    with TestClient(create_app(Service(tmp_path, llm, knowledge))) as client:
+    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key="")) as client:
         yield client, llm, tmp_path
 
 
@@ -98,3 +102,62 @@ def test_requests_survive_a_service_restart(setup, knowledge):
         assert decide(restarted, created["id"], "Department Head").status_code == 200
         final = decide(restarted, created["id"], "Finance Controller").json()
         assert final["response"]["status"] == "ordered"
+
+
+@pytest.fixture
+def locked(knowledge, tmp_path):
+    llm = ScriptedLLM(as_json(PARSED), DONE, draft())
+    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key=KEY)) as client:
+        yield client
+
+
+@pytest.mark.parametrize("headers", [{}, {"X-API-Key": "wrong"}, {"X-API-Key": ""}])
+def test_requests_need_the_access_key(locked, headers):
+    for call in (
+        lambda: locked.post("/requests", json={"text": "20 laptops"}, headers=headers),
+        lambda: locked.get("/requests", headers=headers),
+        lambda: locked.get("/requests/some-id", headers=headers),
+        lambda: locked.post("/requests/some-id/decisions", json={}, headers=headers),
+    ):
+        assert call().status_code == 401
+
+
+def test_the_right_key_is_accepted(locked):
+    response = locked.post(
+        "/requests", json={"text": "20 laptops for Pune"}, headers={"X-API-Key": KEY}
+    )
+    assert response.status_code == 201
+
+
+def test_page_and_health_check_stay_open(locked):
+    assert locked.get("/").status_code == 200
+    assert locked.get("/health").status_code == 200
+
+
+def test_health_reports_what_it_checked(setup):
+    client, _, _ = setup
+    report = client.get("/health").json()
+    assert report["status"] == "ok"
+    assert report["database"] is True
+    assert report["documents_indexed"] > 50
+    assert report["ai_key_configured"] is True
+
+
+def test_health_fails_without_an_ai_key(knowledge, tmp_path):
+    llm = ScriptedLLM()
+    llm.configured = False
+    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key="")) as client:
+        response = client.get("/health")
+    assert response.status_code == 503
+    assert response.json()["ai_key_configured"] is False
+
+
+def test_finished_requests_are_logged_without_their_text(setup, caplog):
+    client, _, _ = setup
+    caplog.set_level("INFO", logger="procurement_agent")
+    created = submit(client)
+    finished = [json.loads(r.message) for r in caplog.records if '"request_finished"' in r.message]
+    assert finished[0]["request_id"] == created["id"]
+    assert finished[0]["status"] == "ready_for_approval"
+    assert finished[0]["tokens"] > 0
+    assert "laptops" not in caplog.text

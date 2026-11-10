@@ -277,6 +277,11 @@ class KnowledgeBase:
         )
         return collection
 
+    @property
+    def size(self) -> int:
+        """How many passages are indexed."""
+        return self._collection.count()
+
     def search(self, query: str, k: int = 3, where: dict | None = None) -> list[SearchHit]:
         """Return the k most relevant passages, best first. Score is 1 for a perfect match."""
         if not query.strip():

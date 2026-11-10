@@ -41,6 +41,11 @@ class GroqClient:
         self._settings = settings or Settings()
         self._http = http or httpx.Client(timeout=60)
 
+    @property
+    def configured(self) -> bool:
+        """Whether a key is set. Checked without calling the service, so health checks are free."""
+        return bool(self._settings.groq_api_key)
+
     def complete(
         self, messages: list[dict], tools: list[dict] | None = None, json_mode: bool = False
     ) -> LLMReply:
