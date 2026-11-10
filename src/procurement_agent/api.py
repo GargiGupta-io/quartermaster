@@ -167,8 +167,8 @@ def create_app(service: Service | None = None, api_key: str | None = None) -> Fa
         yield
 
     app = FastAPI(
-        title="Procurement Agent",
-        description="Purchase requests and questions about company documents, with human "
+        title="Quartermaster",
+        description="AI procurement assistant: purchase requests and questions about company documents, with human "
         "approval. Send the access key in the X-API-Key header.",
         lifespan=lifespan,
     )

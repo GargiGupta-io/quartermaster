@@ -41,7 +41,7 @@ def test_page_loads(setup):
     client, _, _ = setup
     page = client.get("/")
     assert page.status_code == 200
-    assert "Procurement Agent" in page.text
+    assert "Quartermaster" in page.text
 
 
 def test_full_journey_to_a_purchase_order(setup):
