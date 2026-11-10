@@ -2,7 +2,7 @@
 # Blueprint is first created; they are never stored in this repository.
 services:
   - type: web
-    name: procurement-agent
+    name: quartermaster
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
