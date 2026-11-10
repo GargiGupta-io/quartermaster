@@ -1,15 +1,184 @@
 # Procurement Agent
 
-An AI workflow that takes a plain-English purchase request, checks company policy, stock,
-prices and budget, and prepares a purchase order for a manager to approve.
+An AI assistant that handles purchase requests the way a careful procurement officer would. It
+reads a plain-English request, checks company policy, stock, prices and budget, and prepares
+an order that the right managers approve before anything is bought. It also answers questions
+about company policies, contracts and vendors, always showing where the answer came from.
 
-Work in progress. The company, its policies, vendors and figures are fictional.
+Built for Project 12: an agentic AI workflow with enterprise knowledge retrieval, tool use,
+human approval, hallucination checks, evaluation and a production-ready service.
 
-## Setup
+> Kestrel Works, its policies, vendors and figures are fictional. No real orders are placed.
+
+## The business problem
+
+A request like *"We need 20 laptops for the new Engineering hires in Pune"* takes a
+procurement team several steps: check whether stock can cover it, find approved vendors,
+compare prices, apply tax and currency rules, check the department budget, and work out who
+must sign off. Each step is a chance to miss a rule. An AI can do the legwork quickly, but it
+must not be trusted to invent figures, skip a rule or place an order on its own.
+
+## What it does
+
+| You send | You get back |
+|---|---|
+| A purchase request | Where the items come from (stock, a transfer between offices, or a purchase), the vendor, the total with GST, who must approve, and the policy reasons with sources |
+| A question, such as *"How long is the warranty on Lotus Peak laptops?"* | A short answer, with the exact page, row or email it came from |
+| Something it cannot do safely | A refusal, or the questions it needs answered first |
+
+An order is created only after every required approver has approved it on the page.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Request] --> B[Understand]
+    B -->|question| Q[Search documents and answer]
+    B -->|purchase| C[Investigate with tools]
+    B -->|details missing| X[Ask for them]
+    C --> D[Draft decision]
+    Q --> E
+    D --> E[Check figures, sources, vendors and support]
+    E -->|fails| D
+    E -->|passes| F{Approval needed?}
+    F -->|yes| G[Pause for each approver]
+    G --> H[Create purchase order]
+    F -->|no| I[Answer]
+```
+
+1. **Understand:** the AI turns the text into structured details: product, quantity, office,
+   department, budget and business reason. Anything missing becomes a question.
+2. **Investigate:** the AI chooses which tools to call: document search, stock, vendor offers,
+   budget, a live exchange rate and order costing.
+3. **Draft:** the AI writes the decision and its reasons, citing the documents.
+4. **Check:** code checks every figure, source and vendor against the records, and a second AI
+   call checks that each cited passage really supports its statement. A failed check gets one
+   correction; a second failure goes to a person marked *needs careful review*.
+5. **Approve:** the workflow pauses, saved to disk, until each required approver decides.
+   Approvers can approve, reject, or change the vendor or quantity, which restarts approval.
+
+### The AI proposes; code decides
+
+The AI never calculates a figure or picks an approver. Totals, tax, currency conversion,
+approval levels and rule breaches all come from code that implements the policies. If the AI
+writes a different total, the code's total is used. The AI is never offered the tool that
+creates purchase orders, and that tool rechecks every rule and refuses a duplicate.
+
+## Company knowledge
+
+Structured and unstructured documents share one search index, and every passage keeps an
+exact citation:
+
+| Document | Type | Cited as |
+|---|---|---|
+| Six policies: procurement, approvals, vendors, hardware, foreign currency, travel | Markdown, unstructured | `POL-003 section 3.1` |
+| Lotus Peak supply agreement | PDF, unstructured | `CON-104 page 2` |
+| Laptop refresh memo | Word, unstructured | `MEM-011 paragraph 3` |
+| Network switch email thread | Email, unstructured | `EML-022 message 2` |
+| Vendor rate card | Spreadsheet, structured | `PRL-Q4 row 18` |
+| Vendor register | Database records, structured | `REG-VND record V-106` |
+
+Search returns the three best policy sections plus the two best passages from other documents.
+Searching everything together let the laptop memo push the laptop policy out of the results.
+The embedding model runs locally, so documents never leave the machine for indexing.
+
+## Results so far
+
+Measured on the real AI model (`openai/gpt-oss-120b` on Groq) unless stated. A full
+evaluation of about 40 requests is in progress.
+
+- **Search:** the right passage appears in the results for 27 of 28 test questions. The miss
+  is listed in the tests rather than hidden.
+- **Purchase requests:** the laptop, transfer, over-budget, foreign-currency, hardware-exception
+  and prohibited-item scenarios in `data/SCENARIOS.md` give the expected result.
+- **Questions:** one question for each document type was answered from the right source with
+  all checks passing; a question the documents do not cover was declined rather than guessed.
+- **Speed and cost:** a question takes about 3 seconds and 2,000 tokens. A full purchase takes
+  about 50–100 seconds and 10,000–14,000 tokens, mostly waiting on free-tier rate limits.
+- **Automated tests:** 212 tests run on every push, with a scripted AI standing in for the model.
+
+## Try it
+
+**Online:** link to follow.
+
+**On your own computer** (needs [uv](https://docs.astral.sh/uv/) and a free key from
+[console.groq.com/keys](https://console.groq.com/keys), no card needed):
 
 ```
 uv sync
-cp .env.example .env    # add a free key from https://console.groq.com/keys
-uv run python scripts/check_services.py
-uv run pytest
+cp .env.example .env          # paste your Groq key into .env
+uv run uvicorn procurement_agent.api:app --port 8765
 ```
+
+Then open http://127.0.0.1:8765/. Set `API_KEY` in `.env` to require an access key.
+
+### Using the API directly
+
+Interactive API documentation is at `/docs`. Every call except `/` and `/health` needs the
+`X-API-Key` header when an access key is set.
+
+```
+curl -X POST http://127.0.0.1:8765/requests \
+  -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+  -d '{"text": "We need 20 standard laptops for Engineering in Pune"}'
+
+curl -X POST http://127.0.0.1:8765/requests/<id>/decisions \
+  -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+  -d '{"role": "Department Head", "action": "approve", "name": "A. Manager"}'
+```
+
+| Route | Purpose |
+|---|---|
+| `POST /requests` | Submit a request or question; returns the structured response |
+| `GET /requests` | The 50 most recent requests and their status |
+| `GET /requests/{id}` | One request in full |
+| `POST /requests/{id}/decisions` | Approve, reject or change an order |
+| `GET /health` | Database, search index and AI key status, for monitoring |
+
+## Known limits
+
+- **One product per request.** "20 laptops and 20 monitors" is not handled as one order yet,
+  and the no-splitting rule (POL-002 2.3) is not checked across separate orders.
+- **Approver identity is not verified.** Anyone with the access key can act as any approver.
+- **Free-tier limits.** Groq's free plan allows about 1,000 requests and 8,000 tokens a minute,
+  so a busy period means waits. Free hosting also loses saved requests when it restarts.
+- **Fictional data.** The rules are realistic, but the company and documents are invented.
+
+## Built with
+
+All free, with no card needed: LangGraph for the workflow and approval pauses, Groq for the AI
+model, fastembed and Chroma for local search, FastAPI and SQLite for the service, the
+Frankfurter API for live exchange rates, and GitHub Actions for tests.
+
+## Development
+
+```
+uv run pytest                              # all tests, no AI key needed
+uv run ruff check && uv run ruff format --check
+uv run python scripts/check_services.py    # live check of the AI and exchange-rate services
+uv run python scripts/run_request.py "20 laptops for Pune engineering"
+uv run python scripts/build_documents.py   # rebuild the PDF, Word, Excel and email files
+```
+
+### Deploying
+
+The service runs as a Docker container on a free Hugging Face Space. Fill in `HF_TOKEN`,
+`SPACE_ID` and `SPACE_API_KEY` in `.env`, then:
+
+```
+uv run --with huggingface_hub python scripts/deploy_space.py --dry-run   # list what is sent
+uv run --with huggingface_hub python scripts/deploy_space.py
+```
+
+Only committed files are uploaded. The AI key and access key are stored as Space secrets.
+
+| Path | Contents |
+|---|---|
+| `src/procurement_agent/agent.py` | The workflow graph |
+| `src/procurement_agent/rules.py` | Policy rules as code: totals, approvers, rule breaches |
+| `src/procurement_agent/verify.py` | Hallucination checks |
+| `src/procurement_agent/knowledge.py` | Document reading and search |
+| `src/procurement_agent/tools.py` | Tools the AI can call |
+| `src/procurement_agent/api.py` | The web service |
+| `Dockerfile`, `scripts/deploy_space.py` | Container and deployment to Hugging Face Spaces |
+| `data/` | Policies, documents and company records |
