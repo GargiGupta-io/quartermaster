@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.cache/fastembed
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - name: Keep the embedding model between runs
+        uses: actions/cache@v6
+        with:
+          path: .cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check && uv run ruff format --check
+      - name: Tests (a scripted model stands in for the AI, so no key is needed)
+        run: uv run pytest -q
