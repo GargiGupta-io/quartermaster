@@ -141,7 +141,7 @@ curl -X POST http://127.0.0.1:8765/requests/<id>/decisions \
   and the no-splitting rule (POL-002 2.3) is not checked across separate orders.
 - **Approver identity is not verified.** Anyone with the access key can act as any approver.
 - **Free-tier limits.** Groq's free plan allows about 1,000 requests and 8,000 tokens a minute,
-  so a busy period means waits. Free hosting also loses saved requests when it restarts.
+  so a busy period means waits. Free hosting sleeps when idle and loses saved requests when it restarts.
 - **Fictional data.** The rules are realistic, but the company and documents are invented.
 
 ## Built with
@@ -162,15 +162,13 @@ uv run python scripts/build_documents.py   # rebuild the PDF, Word, Excel and em
 
 ### Deploying
 
-The service runs as a Docker container on a free Hugging Face Space. Fill in `HF_TOKEN`,
-`SPACE_ID` and `SPACE_API_KEY` in `.env`, then:
+The service runs as a Docker container on Render's free plan, which needs no card. In
+Render, choose **New > Blueprint**, select this repository, and enter the two values it asks
+for: `GROQ_API_KEY` and `API_KEY` (the access key reviewers type into the page). `render.yaml`
+holds the rest. Every push to `main` redeploys.
 
-```
-uv run --with huggingface_hub python scripts/deploy_space.py --dry-run   # list what is sent
-uv run --with huggingface_hub python scripts/deploy_space.py
-```
-
-Only committed files are uploaded. The AI key and access key are stored as Space secrets.
+Free instances sleep after 15 minutes without visitors, so the first visit after a quiet spell
+takes about a minute.
 
 | Path | Contents |
 |---|---|
@@ -180,5 +178,5 @@ Only committed files are uploaded. The AI key and access key are stored as Space
 | `src/procurement_agent/knowledge.py` | Document reading and search |
 | `src/procurement_agent/tools.py` | Tools the AI can call |
 | `src/procurement_agent/api.py` | The web service |
-| `Dockerfile`, `scripts/deploy_space.py` | Container and deployment to Hugging Face Spaces |
+| `Dockerfile`, `render.yaml` | Container and free deployment on Render |
 | `data/` | Policies, documents and company records |

@@ -1,0 +1,15 @@
+# Render Blueprint: the free web service. Render asks for the two secret values when the
+# Blueprint is first created; they are never stored in this repository.
+services:
+  - type: web
+    name: procurement-agent
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false
