@@ -51,6 +51,7 @@ def numbers_in(text: str) -> list[tuple[float, bool]]:
     """Every figure in the text, with whether it was written in rounded lakh or crore form."""
     text = _CITATION.sub(" ", text)
     text = _PRODUCT_CODE.sub(" ", text)
+    text = _VENDOR_ID.sub(" ", text)  # "V-106" is a name, not a figure
     found = []
     for match in _NUMBER.finditer(text):
         value = float(match.group(1).replace(",", ""))
@@ -88,6 +89,14 @@ def check_numbers(words: str, known_facts) -> Check:
             detail=f"These figures match no record: {', '.join(unsupported)}.",
         )
     return Check(name="figures", passed=True)
+
+
+_SHORT_POLICY_CITATION = re.compile(r"^([A-Z]{3}-[A-Z0-9]+) (\d+\.\d+)$")
+
+
+def canonical_citation(citation: str) -> str:
+    """ "POL-003 3.1" and "POL-003 section 3.1" name the same passage."""
+    return _SHORT_POLICY_CITATION.sub(r"\1 section \2", citation.strip())
 
 
 def check_citations(

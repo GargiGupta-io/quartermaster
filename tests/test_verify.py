@@ -10,6 +10,7 @@ from procurement_agent.llm import LLMError, LLMReply
 from procurement_agent.rules import evaluate_order
 from procurement_agent.schemas import Reason
 from procurement_agent.verify import (
+    canonical_citation,
     check_citations,
     check_numbers,
     check_support,
@@ -66,6 +67,16 @@ def test_invented_figures_fail(words):
     check = check_numbers(words, FACTS)
     assert not check.passed
     assert "match no record" in check.detail
+
+
+def test_vendor_ids_are_not_figures():
+    assert check_numbers("V-106 is suspended, so V-101 is used.", FACTS).passed
+
+
+def test_short_policy_citations_are_normalised():
+    assert canonical_citation("POL-003 3.1") == "POL-003 section 3.1"
+    assert canonical_citation("CON-104 page 2") == "CON-104 page 2"
+    assert canonical_citation("check_stock") == "check_stock"
 
 
 def test_real_citation_passes():
