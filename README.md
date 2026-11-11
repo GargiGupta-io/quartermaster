@@ -57,6 +57,24 @@ flowchart LR
 5. **Approve:** the workflow pauses, saved to disk, until each required approver decides.
    Approvers can approve, reject, or change the vendor or quantity, which restarts approval.
 
+### Architecture
+
+```mermaid
+flowchart LR
+    U[Browser page] -->|HTTPS| API
+    C[Other systems] -->|REST + JSON| API
+    subgraph Render free web service
+      API[FastAPI service<br/>usage limits, logging, metrics] --> G[Guardrails<br/>screen the request]
+      G --> A[LangGraph workflow<br/>understand, investigate, draft, check, approve]
+      A --> T[Tools<br/>stock, budget, vendors, order costing]
+      A --> K[(Chroma index<br/>55 passages, local embeddings)]
+      A --> S[(SQLite<br/>requests, saved workflow state, orders)]
+      T --> R[Policy rules in code<br/>totals, GST, approvers]
+    end
+    A -->|prompts| L[Groq AI<br/>gpt-oss-120b, backup gpt-oss-20b]
+    T -->|exchange rate| F[Frankfurter API]
+```
+
 ### The AI proposes; code decides
 
 The AI never calculates a figure or picks an approver. Totals, tax, currency conversion,
