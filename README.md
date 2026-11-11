@@ -177,7 +177,9 @@ creates purchase orders, so even a request that slipped past the screen could no
 
 - **One product per request.** "20 laptops and 20 monitors" is not handled as one order yet,
   and the no-splitting rule (POL-002 2.3) is not checked across separate orders.
-- **Approver identity is not verified.** Any visitor can act as any approver.
+- **Approver identity is checked only when approver keys are set.** The public demo leaves them
+  off, so any visitor can act as any approver. Set `APPROVER_KEYS` (for example
+  `Department Head=key1;Finance Controller=key2`) and each role needs its own key.
 - **Free-tier limits.** Groq's free plan allows about 1,000 requests and 8,000 tokens a minute,
   so a busy period means waits. Free hosting sleeps when idle and loses saved requests when it restarts.
 - **Fictional data.** The rules are realistic, but the company and documents are invented.
