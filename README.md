@@ -139,6 +139,21 @@ curl -X POST http://127.0.0.1:8765/requests/<id>/decisions \
 | `POST /requests/{id}/decisions` | Approve, reject or change an order |
 | `GET /health` | Database, search index and AI key status, for monitoring |
 
+## When things go wrong
+
+| Problem | What happens |
+|---|---|
+| The main AI model is rate limited or down | The backup model (`openai/gpt-oss-20b`, a separate free allowance) answers instead. Short rate limits are waited out for up to 90 seconds |
+| Both models are unavailable | The request ends as *Could not complete* with a plain "try again in a minute" message. Nothing is decided or ordered |
+| A check fails | The AI gets one correction. A second failure goes to a person as *Needs careful review* |
+| A request tries to instruct the AI ("ignore your rules", "skip approval") | It is refused before the AI sees it |
+| Text that is not a request | It is refused with an example of what to send |
+| A document is broken, over 10 MB, or contains planted instructions | That document or passage is skipped and logged; the rest still load |
+| Too many requests | Each visitor gets 5 every 10 minutes and the whole service 100 a day, with a clear message and a `Retry-After` header |
+
+The AI is also told to treat everything it reads as data, and it never sees the tool that
+creates purchase orders, so even a request that slipped past the screen could not place an order.
+
 ## Known limits
 
 - **One product per request.** "20 laptops and 20 monitors" is not handled as one order yet,
