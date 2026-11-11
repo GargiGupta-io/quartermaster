@@ -1,6 +1,7 @@
 """The workflow: understand the request, investigate with tools, then draft a decision."""
 
 import json
+import logging
 import uuid
 from typing import Any, TypedDict
 
@@ -12,7 +13,7 @@ from pydantic import BaseModel, ValidationError
 
 from procurement_agent import prompts, verify
 from procurement_agent.knowledge import KnowledgeBase, load_passages
-from procurement_agent.llm import LLMClient, LLMError
+from procurement_agent.llm import LLMClient, LLMError, ModelUnavailable
 from procurement_agent.rules import offices, plan_stock
 from procurement_agent.schemas import (
     Answer,
@@ -51,6 +52,7 @@ class SearchInput(BaseModel):
     query: str
 
 
+log = logging.getLogger("procurement_agent")
 SEARCH_TOOL = "search_documents"
 SEARCH_SCHEMA = {
     "type": "function",
@@ -190,6 +192,16 @@ class ProcurementAgent:
         def wrapped(state: AgentState) -> dict:
             try:
                 return node(state)
+            except ModelUnavailable as error:
+                log.warning("AI unavailable: %s", error)
+                return {
+                    "response": self._finish(
+                        state,
+                        "failed",
+                        "The AI service is busy or unavailable right now, so nothing was decided. "
+                        "Please try again in a minute.",
+                    )
+                }
             except LLMError as error:
                 return {
                     "response": self._finish(

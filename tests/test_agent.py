@@ -8,7 +8,7 @@ import pytest
 from procurement_agent.agent import MAX_DRAFT_ATTEMPTS, MAX_TOOL_ROUNDS, ProcurementAgent
 from procurement_agent.config import Settings
 from procurement_agent.knowledge import KnowledgeBase
-from procurement_agent.llm import LLMError, LLMReply, ToolCall
+from procurement_agent.llm import LLMError, LLMReply, ModelUnavailable, ToolCall
 from procurement_agent.prompts import JUDGE
 from procurement_agent.tools import ToolBox
 
@@ -333,6 +333,13 @@ def test_model_failures_end_cleanly_with_no_order(run, replies):
     response, _ = run(*replies)
     assert response.status == "failed"
     assert response.order is None
+
+
+def test_a_busy_ai_service_gets_a_plain_message(run):
+    response, _ = run(as_json(PARSED), ModelUnavailable("HTTP 429: rate limit reached"))
+    assert response.status == "failed"
+    assert "busy or unavailable" in response.summary
+    assert "429" not in response.summary
 
 
 QUESTION = {"is_purchase_request": False, "is_question": True, "item": None}

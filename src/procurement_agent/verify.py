@@ -8,7 +8,7 @@ from pydantic import BaseModel, ValidationError
 from procurement_agent import prompts
 from procurement_agent.company_data import CompanyData
 from procurement_agent.knowledge import Passage, load_passages
-from procurement_agent.llm import LLMClient, LLMError
+from procurement_agent.llm import LLMClient, LLMError, ModelUnavailable
 from procurement_agent.rules import OrderEvaluation, StockPlan
 from procurement_agent.schemas import PolicyBasis, Reason, Source
 
@@ -148,6 +148,9 @@ def check_support(
             json_mode=True,
         )
         verdicts = _Verdicts.model_validate_json(reply.content or "")
+    except ModelUnavailable:
+        detail = "The support check could not run because the AI service was busy."
+        return Check(name="support", passed=False, detail=detail), 0
     except (LLMError, ValidationError) as error:
         detail = f"The support check could not run: {str(error)[:120]}"
         return Check(name="support", passed=False, detail=detail), 0
