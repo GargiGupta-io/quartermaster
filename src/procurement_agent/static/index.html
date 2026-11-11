@@ -5,80 +5,335 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quartermaster: AI procurement assistant</title>
 <style>
-  :root { --ink:#1c2430; --muted:#5d6877; --line:#d9dee5; --bg:#f5f6f8; --card:#fff;
-          --good:#17693c; --warn:#94590a; --bad:#a3271f; --accent:#1f4fa3; }
+  :root {
+    --ink:#15213a; --muted:#5a6578; --faint:#8a94a6; --line:#dfe4ec; --bg:#f3f5f9;
+    --card:#ffffff; --soft:#f7f9fc; --accent:#b8661b; --accent-soft:#fbf1e6;
+    --navy:#1d3461; --navy-soft:#e8eef8;
+    --good:#1c6b44; --good-soft:#e3f2ea; --warn:#93600d; --warn-soft:#fcf1dc;
+    --bad:#a3271f; --bad-soft:#f9e4e2;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --radius:16px; --shadow:0 1px 2px rgba(21,33,58,.05),0 8px 24px rgba(21,33,58,.06);
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); line-height:1.45;
-         font:15px/1.45 -apple-system,"Segoe UI",Roboto,sans-serif; }
-  header { background:var(--card); border-bottom:1px solid var(--line); padding:14px 24px; }
-  h1 { font-size:18px; margin:0; }
-  header p { margin:2px 0 0; color:var(--muted); font-size:13px; }
-  main { display:grid; grid-template-columns:320px minmax(0,1fr); gap:20px; padding:20px 24px;
-         max-width:1240px; margin:auto; align-items:start; }
-  @media (max-width:800px) { main { grid-template-columns:1fr; } }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px;
-          margin-bottom:16px; }
-  h2 { font-size:14px; margin:0 0 10px; }
-  h3 { font-size:13px; margin:18px 0 6px; color:var(--muted); }
-  .kind { font-size:12px; color:var(--muted); border:1px solid currentColor; border-radius:4px; padding:0 5px; margin-left:4px; }
-  textarea,input,select { width:100%; font:inherit; padding:8px; border:1px solid var(--line);
-          border-radius:6px; background:#fff; color:var(--ink); }
-  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
-  button { font:inherit; padding:8px 12px; border-radius:6px; border:1px solid var(--line);
-           background:#fff; color:var(--ink); cursor:pointer; }
-  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-  button.good { background:var(--good); border-color:var(--good); color:#fff; }
-  button.bad { color:var(--bad); border-color:var(--bad); }
+  [hidden] { display:none !important; }
+  html { scroll-behavior:smooth; scroll-padding-top:84px; }
+  body { margin:0; color:var(--ink); font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;
+         background:var(--bg) radial-gradient(rgba(29,52,97,.10) 1px, transparent 1.2px) 0 0/22px 22px; }
+  a { color:inherit; }
+  h1,h2,h3 { margin:0; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+             color:var(--accent); margin:0 0 10px; }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+
+  /* Header */
+  .site-header { position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
+                 background:rgba(243,245,249,.85); border-bottom:1px solid var(--line); }
+  .site-header .wrap { display:flex; align-items:center; gap:16px; height:68px; }
+  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; font-weight:700; }
+  .brand-mark { display:grid; place-items:center; width:36px; height:36px; border-radius:10px;
+                background:var(--navy); color:#fff; font:700 14px var(--serif); letter-spacing:.02em; }
+  .tabs-nav { margin:0 auto; display:flex; gap:2px; padding:4px; border:1px solid var(--line);
+              border-radius:999px; background:var(--card); }
+  .tabs-nav a, .tabs-nav button { border:0; background:none; font:600 13px/1 inherit; font-family:inherit;
+              color:var(--muted); padding:9px 14px; border-radius:999px; cursor:pointer; text-decoration:none; }
+  .tabs-nav a:hover, .tabs-nav button:hover { color:var(--ink); background:var(--soft); }
+  .status { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600;
+            letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700;
+          letter-spacing:.06em; background:var(--line); color:var(--muted); }
+  .pill.ok { background:var(--good-soft); color:var(--good); }
+  .pill.caution { background:var(--warn-soft); color:var(--warn); }
+  .pill.stop { background:var(--bad-soft); color:var(--bad); }
+  @media (max-width:860px) { .tabs-nav { display:none; } .status { margin-left:auto; } }
+
+  /* Hero */
+  .hero { text-align:center; padding:72px 0 40px; }
+  .hero h1 { font:700 clamp(48px,8vw,88px)/1 var(--serif); letter-spacing:-.02em; }
+  .hero-text { max-width:620px; margin:22px auto 0; font-size:18px; color:var(--muted); }
+  .tagline { margin:18px 0 0; font-weight:700; font-size:17px; }
+  .context { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;
+             max-width:760px; margin:40px auto 0; text-align:left; }
+  .context article { background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+                     padding:18px 20px; box-shadow:var(--shadow); }
+  .context span { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  .context strong { display:block; margin:4px 0; font-size:17px; }
+  .context p { margin:0; color:var(--muted); font-size:14px; }
+  @media (max-width:640px) { .context { grid-template-columns:1fr; } }
+
+  /* Sections */
+  section.block { padding:48px 0; }
+  .block-title { font:700 clamp(30px,4vw,42px)/1.15 var(--serif); }
+  .block-lead { max-width:640px; margin:10px 0 0; color:var(--muted); }
+  .centered { text-align:center; }
+  .centered .block-lead { margin-left:auto; margin-right:auto; }
+  hr.rule { border:0; border-top:1px solid var(--line); margin:0; }
+
+  /* Ask */
+  .ask { margin-top:24px; padding:20px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+         display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:end; }
+  .field span { display:block; font-size:14px; color:var(--muted); margin-bottom:6px; }
+  textarea, input, select { width:100%; font:inherit; color:var(--ink); background:var(--card);
+         border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  textarea { resize:vertical; min-height:56px; }
+  textarea:focus, input:focus, select:focus { outline:2px solid var(--navy-soft); border-color:var(--navy); }
+  button { font:inherit; cursor:pointer; }
+  .primary { border:0; border-radius:12px; padding:14px 22px; font-weight:700; color:#fff;
+             background:var(--navy); box-shadow:0 6px 16px rgba(29,52,97,.25); }
+  .primary:hover { background:#16294d; }
   button:disabled { opacity:.6; cursor:default; }
-  .row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-  .item { display:block; width:100%; text-align:left; border:0; border-top:1px solid var(--line);
-          border-radius:0; padding:10px 2px; background:none; }
-  .item.active { background:#eef2f9; }
-  .item small { display:block; color:var(--muted); margin-top:2px; }
-  .badge { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px;
-           border-radius:10px; background:#e8ebef; }
-  .ok { background:#e2f2e8; color:var(--good); }
-  .caution { background:#fbefdc; color:var(--warn); }
-  .stop { background:#f9e3e1; color:var(--bad); }
-  .figures { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;
-             margin:12px 0; }
-  .figures b { display:block; font-size:17px; }
-  .figures span { font-size:12px; color:var(--muted); }
-  .notice { padding:10px 12px; border-radius:6px; margin:10px 0; }
-  ul { margin:4px 0; padding-left:20px; }
-  details { border-top:1px solid var(--line); padding:6px 0; }
-  summary { cursor:pointer; }
-  .muted { color:var(--muted); font-size:13px; }
-  .error { color:var(--bad); }
+  .guidance { margin:10px 0 0; text-align:right; font-size:12px; font-weight:600; color:var(--faint); }
+  .loading { display:flex; align-items:center; gap:10px; margin-top:16px; font-weight:600; color:var(--navy); }
+  .dots { display:inline-flex; gap:4px; }
+  .dots i { width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pulse 1s infinite ease-in-out; }
+  .dots i:nth-child(2) { animation-delay:.15s; } .dots i:nth-child(3) { animation-delay:.3s; }
+  @keyframes pulse { 0%,100% { opacity:.25; transform:scale(.8); } 50% { opacity:1; transform:scale(1); } }
+  .form-error { color:var(--bad); font-weight:600; margin:12px 0 0; }
+  .key-card { margin-top:16px; padding:16px; border:1px solid var(--warn); background:var(--warn-soft);
+              border-radius:12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
+  .key-card p { grid-column:1/-1; margin:0; }
+  @media (max-width:640px) { .ask, .key-card { grid-template-columns:1fr; } .guidance { text-align:left; } }
+
+  /* What's inside */
+  .inside { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:28px; }
+  @media (max-width:900px) { .inside { grid-template-columns:1fr; } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+           box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; }
+  .panel-visual { padding:22px; flex:1; display:flex; flex-direction:column; justify-content:center; background:var(--soft)
+           linear-gradient(rgba(29,52,97,.05) 1px, transparent 1px) 0 0/100% 26px;
+           border-bottom:1px solid var(--line); }
+  .panel-copy { padding:20px 22px 22px; }
+  .panel-copy .eyebrow { margin-bottom:6px; }
+  .panel-copy strong { display:block; font:700 22px/1.25 var(--serif); }
+  .panel-copy p { margin:8px 0 0; color:var(--muted); font-size:14px; }
+  .steps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .tile span { display:block; font-size:11px; font-weight:700; letter-spacing:.06em;
+               text-transform:uppercase; color:var(--accent); }
+  .tile b { display:block; margin-top:4px; font-size:14px; line-height:1.3; }
+  .samples { display:grid; gap:8px; }
+  .sample { border:1px solid var(--line); background:var(--card); border-radius:999px;
+            padding:8px 14px; text-align:center; }
+  .sample:hover { border-color:var(--navy); background:var(--navy-soft); }
+  .sample b { display:block; font-size:13px; }
+  .sample small { display:block; color:var(--muted); font-size:11px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .chip { font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
+          border:1px solid var(--line); background:var(--card); color:var(--muted); }
+  .feature { background:var(--navy-soft); border:1px solid #cfdbef; border-radius:12px; padding:14px; margin-bottom:10px; }
+  .feature span { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--navy); }
+  .feature b { display:block; font:700 20px/1.25 var(--serif); margin-top:4px; }
+
+  /* Result */
+  .result-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:28px; }
+  @media (max-width:760px) { .result-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .result-tab { border:1px solid var(--line); background:var(--card); border-radius:14px; padding:12px;
+                box-shadow:var(--shadow); color:var(--muted); }
+  .result-tab small { display:block; font-size:11px; font-weight:700; color:var(--faint); }
+  .result-tab b { display:block; font-size:17px; color:var(--ink); }
+  .result-tab span { font-size:12px; font-weight:600; }
+  .result-tab[aria-selected="true"] { border-color:var(--navy); background:var(--navy-soft); }
+  .result-tab[aria-selected="true"] b { color:var(--navy); }
+  .result-tab .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:4px; border-radius:999px;
+                       background:var(--accent); color:#fff; font-size:11px; }
+  .result-body { margin-top:18px; background:var(--card); border:1px solid var(--line);
+                 border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 28px; min-height:180px; }
+  .result-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start;
+                 padding-bottom:16px; margin-bottom:6px; border-bottom:1px solid var(--line); }
+  .result-head h3 { font:700 22px/1.3 var(--serif); }
+  .result-body h4 { margin:22px 0 8px; font-size:12px; font-weight:700; letter-spacing:.08em;
+                    text-transform:uppercase; color:var(--faint); }
+  .answer { font-size:17px; margin:14px 0 0; }
+  .figures { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
+  .figure { background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .figure b { display:block; font-size:18px; }
+  .figure span { font-size:12px; color:var(--muted); }
+  .notice { padding:12px 14px; border-radius:12px; margin:12px 0 0; }
+  .notice.ok { background:var(--good-soft); color:var(--good); }
+  .notice.caution { background:var(--warn-soft); color:var(--warn); }
+  .notice.stop { background:var(--bad-soft); color:var(--bad); }
+  ul.clean { margin:0; padding-left:20px; }
+  ul.clean li { margin:4px 0; }
+  .cite { display:inline-block; font-size:12px; font-weight:600; color:var(--navy);
+          background:var(--navy-soft); border-radius:6px; padding:1px 6px; margin-left:4px; }
+  details { border:1px solid var(--line); border-radius:12px; padding:10px 14px; margin:8px 0; background:var(--soft); }
+  summary { cursor:pointer; font-weight:600; }
+  details p { margin:8px 0 0; }
+  .kind { font-size:11px; font-weight:600; color:var(--muted); border:1px solid var(--line);
+          background:var(--card); border-radius:999px; padding:1px 8px; margin-left:6px; }
+  .checks li { list-style:none; margin:6px 0; }
+  .checks { padding:0; }
+  .tick { display:inline-block; width:20px; font-weight:700; }
+  .tick.ok { color:var(--good); } .tick.stop { color:var(--bad); }
+  .decision { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+  .decision label { font-size:13px; color:var(--muted); }
+  .decision label input, .decision label select { margin-top:4px; }
+  .decision .full { grid-column:1/-1; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .approve { border:0; border-radius:12px; padding:12px 20px; font-weight:700; color:#fff; background:var(--good); }
+  .reject { border:1px solid var(--bad); border-radius:12px; padding:12px 20px; font-weight:700; color:var(--bad); background:var(--card); }
+  .secondary { border:1px solid var(--line); border-radius:12px; padding:10px 16px; font-weight:600; background:var(--card); }
+  @media (max-width:640px) { .decision { grid-template-columns:1fr; } }
+
+  /* Recent */
+  .recent { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:24px; }
+  .recent button { text-align:left; border:1px solid var(--line); background:var(--card); border-radius:14px;
+                   padding:14px 16px; box-shadow:var(--shadow); }
+  .recent button:hover, .recent button.active { border-color:var(--navy); }
+  .recent button span { display:block; margin-bottom:8px; font-size:14px; }
+
+  footer { border-top:1px solid var(--line); margin-top:40px; }
+  footer .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:22px 24px; font-size:13px; color:var(--muted); }
+  footer b { color:var(--ink); }
 </style>
 </head>
 <body>
-<header>
-  <h1>Quartermaster</h1>
-  <p>Kestrel Works is a fictional company. No real orders are placed.</p>
-</header>
-<main>
-  <div>
-    <section class="card" id="key-card" hidden>
-      <h2>Access key</h2>
-      <p class="muted" id="key-state">This service needs an access key. Ask the owner for one.</p>
-      <input id="key" type="password" autocomplete="off" aria-label="Access key">
-      <div class="row"><button class="primary" id="key-save">Use this key</button></div>
-    </section>
-    <section class="card">
-      <h2>New request or question</h2>
-      <p class="muted">Ask for something to be bought, or ask about a policy, contract or vendor.</p>
-      <textarea id="text" rows="4" aria-label="Purchase request or question">We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh.</textarea>
-      <div class="row"><button class="primary" id="submit">Check request</button></div>
-      <p class="muted" id="submit-state" role="status"></p>
-    </section>
-    <section class="card">
-      <h2>Requests</h2>
-      <div id="list"><p class="muted">None yet.</p></div>
-    </section>
+<nav class="site-header" aria-label="Primary">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark">QM</span><span>Quartermaster</span></a>
+    <div class="tabs-nav">
+      <a href="#top">Overview</a>
+      <a href="#ask">Ask</a>
+      <button type="button" data-goto="decision">Decision</button>
+      <button type="button" data-goto="sources">Sources</button>
+      <button type="button" data-goto="approval">Approval</button>
+      <button type="button" data-goto="checks">Checks</button>
+    </div>
+    <div class="status"><span>Service</span><strong class="pill" id="service-status">Checking</strong></div>
   </div>
-  <section id="detail" class="card"><p class="muted">Submit a request or choose one from the list.</p></section>
+</nav>
+
+<main id="top">
+  <header class="hero wrap">
+    <p class="eyebrow">Procurement desk</p>
+    <h1>Quartermaster</h1>
+    <p class="hero-text">An AI assistant that checks company policy, stock, prices and budget,
+      shows where every answer came from, and waits for the right managers before anything is bought.</p>
+    <p class="tagline">Check the rules. Show the source. Ask before buying.</p>
+    <div class="context">
+      <article>
+        <span>Requests</span>
+        <strong>Buy something</strong>
+        <p>Describe what you need. It works out stock, vendor, total with GST and who must approve.</p>
+      </article>
+      <article>
+        <span>Questions</span>
+        <strong>Ask about the rules</strong>
+        <p>Ask about a policy, contract or vendor. The answer cites the exact page, row or email.</p>
+      </article>
+    </div>
+  </header>
+
+  <section class="block wrap" id="ask" aria-labelledby="ask-title">
+    <h2 class="block-title" id="ask-title">Start a request</h2>
+    <p class="block-lead">Type a purchase request or a question, or pick a sample below.</p>
+    <form class="ask" id="ask-form">
+      <label class="field">
+        <span>Request or question</span>
+        <textarea id="text" rows="2" maxlength="2000" required>We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh.</textarea>
+      </label>
+      <button class="primary" id="submit" type="submit">Check request</button>
+    </form>
+    <p class="guidance">Kestrel Works is a fictional company, and no real orders are placed. Each visitor can send 5 requests every 10 minutes.</p>
+    <div class="loading" id="loading" hidden aria-live="polite">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="loading-text">Reading the request</span>
+    </div>
+    <p class="form-error" id="submit-error" role="alert" hidden></p>
+    <div class="key-card" id="key-card" hidden>
+      <p><b>Access key needed.</b> <span id="key-state">This copy of the service is private. Ask its owner for the key.</span></p>
+      <input id="key" type="password" autocomplete="off" aria-label="Access key">
+      <button class="secondary" id="key-save" type="button">Use this key</button>
+    </div>
+  </section>
+
+  <section class="block wrap" aria-labelledby="inside-title">
+    <h2 class="block-title" id="inside-title">What's inside?</h2>
+    <p class="block-lead">How a request is handled, samples to try, and the safeguards that keep the AI honest.</p>
+    <div class="inside">
+      <article class="panel">
+        <div class="panel-visual">
+          <div class="steps">
+            <div class="tile"><span>1. Understand</span><b>Product, quantity, office, budget</b></div>
+            <div class="tile"><span>2. Investigate</span><b>Policies, stock, vendors, exchange rate</b></div>
+            <div class="tile"><span>3. Check</span><b>Every figure and source verified</b></div>
+            <div class="tile"><span>4. Approve</span><b>Each manager signs off before an order</b></div>
+          </div>
+        </div>
+        <div class="panel-copy">
+          <p class="eyebrow">How it works</p>
+          <strong>Four steps, one record</strong>
+          <p>The workflow pauses for approval and picks up where it left off, even after a restart.</p>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-visual">
+          <p class="eyebrow">Try a sample</p>
+          <div class="samples" id="samples">
+            <button type="button" class="sample" data-text="We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh."><b>Laptops for Pune</b><small>Stock first, two approvers</small></button>
+            <button type="button" class="sample" data-text="10 standard laptops for the Mumbai Sales team, budget 8 lakh."><b>Laptops for Mumbai</b><small>Transfer instead of buying</small></button>
+            <button type="button" class="sample" data-text="20 monitors for Operations in Mumbai, budget 5 lakh."><b>Monitors over budget</b><small>CFO exception needed</small></button>
+            <button type="button" class="sample" data-text="2 48-port network switches for the Pune engineering lab, budget 3 lakh."><b>Network switches</b><small>Foreign currency, sole source</small></button>
+            <button type="button" class="sample" data-text="How long is the warranty on Lotus Peak laptops?"><b>Warranty question</b><small>Answered from the contract</small></button>
+            <button type="button" class="sample" data-text="Buy 40,000 rupees of gift cards for the Sales team."><b>Gift cards</b><small>Refused by policy</small></button>
+          </div>
+        </div>
+        <div class="panel-copy">
+          <p class="eyebrow">Sample cases</p>
+          <strong>Six cases, six rules</strong>
+          <p>Each sample tests a different policy rule. Click one to run it.</p>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-visual">
+          <div class="feature"><span>Safeguard</span><b>The AI proposes; code decides</b></div>
+          <div class="steps">
+            <div class="tile"><span>Figures</span><b>Totals and tax from code</b></div>
+            <div class="tile"><span>Sources</span><b>Each citation re-checked</b></div>
+          </div>
+          <div class="chips"><span class="chip">Groq</span><span class="chip">LangGraph</span><span class="chip">Chroma</span><span class="chip">FastAPI</span><span class="chip">Render</span></div>
+        </div>
+        <div class="panel-copy">
+          <p class="eyebrow">Built to be trusted</p>
+          <strong>Checked before you see it</strong>
+          <p>A failed check gets one correction, then goes to a person. No order is created without approval.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="block wrap" id="result" aria-labelledby="result-title">
+    <div class="centered">
+      <p class="eyebrow">Result</p>
+      <h2 class="block-title" id="result-title">From request to purchase order</h2>
+    </div>
+    <div class="result-tabs" role="tablist">
+      <button class="result-tab" role="tab" data-tab="decision" aria-selected="true"><small>01</small><b>Decision</b><span>Answer and order</span></button>
+      <button class="result-tab" role="tab" data-tab="sources" aria-selected="false"><small>02</small><b>Sources</b><span>Reasons and documents</span></button>
+      <button class="result-tab" role="tab" data-tab="approval" aria-selected="false"><small>03</small><b>Approval<span class="count" id="approval-count" hidden></span></b><span>Sign-off and order</span></button>
+      <button class="result-tab" role="tab" data-tab="checks" aria-selected="false"><small>04</small><b>Checks</b><span>Verification and cost</span></button>
+    </div>
+    <div class="result-body" id="detail" role="tabpanel">
+      <p class="muted">Run a request or open one below, and the result appears here.</p>
+    </div>
+  </section>
+
+  <section class="block wrap" aria-labelledby="recent-title">
+    <h2 class="block-title" id="recent-title">Recent requests</h2>
+    <p class="block-lead">The latest requests on this server. Free hosting clears them when it restarts.</p>
+    <div class="recent" id="list"><p class="muted">None yet.</p></div>
+  </section>
 </main>
+
+<footer>
+  <div class="wrap">
+    <span>Developed by <b>Gargi Gupta</b></span>
+    <span>Kestrel Works is a fictional company. No real orders are placed.</span>
+  </div>
+</footer>
+
 <script>
 const LABELS = {
   ready_for_approval: ["Waiting for approval", "caution"], needs_review: ["Needs careful review", "stop"],
@@ -86,41 +341,60 @@ const LABELS = {
   refused: ["Refused", "stop"], failed: ["Could not complete", "stop"],
   rejected: ["Rejected", "stop"], ordered: ["Order created", "ok"], answered: ["Answered", "ok"],
 };
+const CHECKS = {
+  figures: "Every figure matches the records", citations: "Every reason cites a real source",
+  vendors: "Only approved vendors are named", support: "Each source supports its statement",
+};
+const STEPS = ["Reading the request", "Searching company documents", "Checking stock and prices",
+               "Working out approvals", "Checking every figure and source"];
 const esc = value => String(value ?? "").replace(/[&<>"']/g,
   c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr = value => "₹" + Number(value).toLocaleString("en-IN", {maximumFractionDigits: 2});
 const badge = status => {
   const [text, tone] = LABELS[status] || [status, ""];
-  return `<span class="badge ${tone}">${esc(text)}</span>`;
+  return `<span class="pill ${tone}">${esc(text)}</span>`;
 };
-let current = null;
+const $ = id => document.getElementById(id);
+let current = null, view = null, tab = "decision";
 
 async function api(path, options = {}) {
-  const headers = {...(options.headers || {}), "X-API-Key": localStorage.getItem("apiKey") || ""};
+  const headers = {...(options.headers || {})};
+  const key = localStorage.getItem("apiKey");
+  if (key) headers["X-API-Key"] = key;
   const response = await fetch(path, {...options, headers});
   const body = await response.json().catch(() => ({}));
   if (response.status === 401) {
-    document.getElementById("key-card").hidden = false;
-    if (localStorage.getItem("apiKey")) {
-      document.getElementById("key-state").textContent = "That access key was not accepted.";
-    }
-    throw new Error("An access key is needed. Enter it above.");
+    $("key-card").hidden = false;
+    if (key) $("key-state").textContent = "That access key was not accepted.";
+    throw new Error("An access key is needed. Enter it below.");
   }
   if (!response.ok) {
-    const detail = typeof body.detail === "string" ? body.detail : "The request was not accepted.";
-    throw new Error(detail);
+    throw new Error(typeof body.detail === "string" ? body.detail : "The request was not accepted.");
   }
   return body;
 }
 
+async function checkService() {
+  const pill = $("service-status");
+  try {
+    const response = await fetch("/health");
+    const ok = response.ok;
+    pill.textContent = ok ? "Ready" : "Limited";
+    pill.className = "pill " + (ok ? "ok" : "caution");
+  } catch {
+    pill.textContent = "Offline";
+    pill.className = "pill stop";
+  }
+}
+
 async function refreshList() {
   const items = await api("/requests");
-  const list = document.getElementById("list");
+  const list = $("list");
   if (!items.length) { list.innerHTML = '<p class="muted">None yet.</p>'; return; }
   list.innerHTML = items.map(item => `
-    <button class="item ${item.id === current ? "active" : ""}" data-id="${esc(item.id)}">
-      ${esc(item.text.length > 70 ? item.text.slice(0, 70) + "…" : item.text)}
-      <small>${badge(item.status)}</small>
+    <button class="${item.id === current ? "active" : ""}" data-id="${esc(item.id)}">
+      <span>${esc(item.text.length > 90 ? item.text.slice(0, 90) + "…" : item.text)}</span>
+      ${badge(item.status)}
     </button>`).join("");
   list.querySelectorAll("button").forEach(button =>
     button.addEventListener("click", () => openRequest(button.dataset.id)));
@@ -128,84 +402,138 @@ async function refreshList() {
 
 async function openRequest(id) {
   current = id;
-  render(await api(`/requests/${id}`));
+  show(await api(`/requests/${id}`), "decision");
+  $("result").scrollIntoView();
   refreshList();
 }
 
-function render(view) {
-  const r = view.response, o = r.order, s = r.stock;
-  const parts = [`<h2>${esc(view.text)}</h2>${badge(r.status)}<p>${esc(r.summary)}</p>`];
+function show(newView, newTab) {
+  view = newView;
+  if (newTab) tab = newTab;
+  const pending = view.response.pending_approvers.length;
+  $("approval-count").hidden = !pending;
+  $("approval-count").textContent = pending;
+  render();
+}
+
+function selectTab(name) {
+  tab = name;
+  document.querySelectorAll(".result-tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === name));
+  if (view) render();
+}
+
+function render() {
+  document.querySelectorAll(".result-tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === tab));
+  const r = view.response;
+  const head = `<div class="result-head"><h3>${esc(view.text)}</h3>${badge(r.status)}</div>`;
+  const panel = {decision: decisionPanel, sources: sourcesPanel, approval: approvalPanel, checks: checksPanel}[tab](r);
+  $("detail").innerHTML = head + panel;
+  const form = $("detail").querySelector("#decision");
+  if (form) wireDecision(form, view.id);
+}
+
+function decisionPanel(r) {
+  const parts = [`<p class="answer">${esc(r.summary)}</p>`];
   if (r.approval_error) parts.push(`<div class="notice stop" role="alert">${esc(r.approval_error)}</div>`);
   for (const w of r.warnings) parts.push(`<div class="notice caution">${esc(w)}</div>`);
-  if (r.questions.length) parts.push(`<h3>Questions</h3><ul>${r.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`);
+  if (r.questions.length) parts.push(`<h4>Questions to answer first</h4><ul class="clean">${r.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`);
+  const s = r.stock, o = r.order;
   if (s) {
     const lines = [];
     if (s.from_local_stock) lines.push(`${s.from_local_stock} from local stock`);
     if (s.transfer_from) lines.push(`${s.transfer_quantity} transferred from ${esc(s.transfer_from)}`);
     if (s.purchase_quantity) lines.push(`${s.purchase_quantity} to purchase`);
-    parts.push(`<h3>Where the ${s.requested} units come from</h3><p>${lines.join(", ")}</p>`);
+    parts.push(`<h4>Where the ${s.requested} units come from</h4><p>${lines.join(", ")}</p>`);
   }
   if (o) {
-    parts.push(`<h3>Proposed order</h3><div class="figures">
-      <div><b>${esc(o.vendor_name)}</b><span>Vendor ${esc(o.vendor_id)}</span></div>
-      <div><b>${inr(o.unit_price_inr)}</b><span>Per unit, before GST</span></div>
-      <div><b>${inr(o.total_inr)}</b><span>Total with GST</span></div>
-      <div><b>${inr(o.budget_remaining_inr)}</b><span>Department budget left</span></div>
-      <div><b>${o.quotes_required}</b><span>Quotes required</span></div>
+    parts.push(`<h4>Proposed order</h4><div class="figures">
+      <div class="figure"><b>${esc(o.vendor_name)}</b><span>Vendor ${esc(o.vendor_id)}</span></div>
+      <div class="figure"><b>${inr(o.unit_price_inr)}</b><span>Per unit, before GST</span></div>
+      <div class="figure"><b>${inr(o.total_inr)}</b><span>Total with GST</span></div>
+      <div class="figure"><b>${inr(o.budget_remaining_inr)}</b><span>Department budget left</span></div>
+      <div class="figure"><b>${o.quotes_required}</b><span>Quotes required</span></div>
     </div>`);
-    parts.push(`<p class="muted">Required approvers: ${o.required_approvers.map(esc).join(", ")}</p>`);
-    if (o.justification_required.length) {
-      parts.push(`<ul>${o.justification_required.map(j => `<li>${esc(j)}</li>`).join("")}</ul>`);
-    }
   }
   if (r.purchase_order) {
     parts.push(`<div class="notice ok">Purchase order <b>${esc(r.purchase_order.po_number)}</b> created for ${inr(r.purchase_order.total_inr)}.</div>`);
   }
-  if (r.pending_approvers.length) parts.push(decisionForm(r));
+  if (r.pending_approvers.length) {
+    parts.push(`<div class="notice caution">Waiting for: ${r.pending_approvers.map(esc).join(", ")}. Open <b>Approval</b> to decide.</div>`);
+  }
+  return parts.join("");
+}
+
+function sourcesPanel(r) {
+  const parts = [];
   if (r.reasons.length) {
-    parts.push(`<h3>Why</h3><ul>${r.reasons.map(x => `<li>${esc(x.statement)} <span class="muted">${x.citations.map(esc).join(", ")}</span></li>`).join("")}</ul>`);
+    parts.push(`<h4>Why</h4><ul class="clean">${r.reasons.map(x =>
+      `<li>${esc(x.statement)}${x.citations.map(c => `<span class="cite">${esc(c)}</span>`).join("")}</li>`).join("")}</ul>`);
   }
   if ((r.sources || []).length) {
-    parts.push(`<h3>Sources used</h3>${r.sources.map(src =>
-      `<details><summary>${esc(src.citation)}: ${esc(src.title)} <span class="kind">${esc(src.source_type)}, ${src.structured ? "structured" : "unstructured"}</span></summary><p class="muted">${esc(src.text)}</p><p class="muted">File: ${esc(src.file)}</p></details>`).join("")}`);
+    parts.push(`<h4>Documents used</h4>${r.sources.map(src =>
+      `<details><summary>${esc(src.citation)}: ${esc(src.title)} <span class="kind">${esc(src.source_type)}, ${src.structured ? "structured" : "unstructured"}</span></summary><p class="muted">${esc(src.text)}</p><p class="muted small">File: ${esc(src.file)}</p></details>`).join("")}`);
   }
   if (r.policy_basis.length) {
-    parts.push(`<h3>Policy sections that apply</h3>${r.policy_basis.map(b =>
+    parts.push(`<h4>Policy sections that apply</h4>${r.policy_basis.map(b =>
       `<details><summary>${esc(b.citation)}: ${esc(b.heading)}</summary><p class="muted">${esc(b.text)}</p></details>`).join("")}`);
   }
-  if (r.verification) {
-    parts.push(`<h3>Automatic checks</h3><ul>${r.verification.checks.map(c =>
-      `<li>${c.passed ? "Passed" : "Failed"}: ${esc(c.name)}${c.detail ? " - " + esc(c.detail) : ""}</li>`).join("")}</ul>`);
+  return parts.join("") || '<p class="muted">No documents were needed for this result.</p>';
+}
+
+function approvalPanel(r) {
+  const parts = [];
+  const o = r.order;
+  if (o) {
+    parts.push(`<h4>Required approvers</h4><p>${o.required_approvers.map(esc).join(", ") || "None"}</p>`);
+    if (o.justification_required.length) {
+      parts.push(`<h4>Justification needed</h4><ul class="clean">${o.justification_required.map(j => `<li>${esc(j)}</li>`).join("")}</ul>`);
+    }
   }
+  if (r.approval_error) parts.push(`<div class="notice stop" role="alert">${esc(r.approval_error)}</div>`);
+  if (r.purchase_order) {
+    parts.push(`<div class="notice ok">Purchase order <b>${esc(r.purchase_order.po_number)}</b> created for ${inr(r.purchase_order.total_inr)}.</div>`);
+  }
+  if (r.pending_approvers.length) parts.push(decisionForm(r));
   if (r.decisions.length) {
-    parts.push(`<h3>Decisions</h3><ul>${r.decisions.map(d =>
-      `<li>${esc(d.name)} (${esc(d.role)}): ${esc(d.action)}${d.note ? " - " + esc(d.note) : ""}</li>`).join("")}</ul>`);
+    parts.push(`<h4>Decisions so far</h4><ul class="clean">${r.decisions.map(d =>
+      `<li><b>${esc(d.name)}</b> (${esc(d.role)}): ${esc(d.action)}${d.note ? " - " + esc(d.note) : ""}</li>`).join("")}</ul>`);
   }
-  parts.push(`<p class="muted">Tools used: ${r.tools_used.map(esc).join(", ") || "none"}. AI tokens used: ${r.tokens_used}.</p>`);
-  const detail = document.getElementById("detail");
-  detail.innerHTML = parts.join("");
-  const form = detail.querySelector("#decision");
-  if (form) wireDecision(form, view.id);
+  return parts.join("") || '<p class="muted">Nothing needs approval for this result.</p>';
+}
+
+function checksPanel(r) {
+  const parts = [];
+  if (r.verification) {
+    parts.push(`<h4>Automatic checks</h4><ul class="checks">${r.verification.checks.map(c =>
+      `<li><span class="tick ${c.passed ? "ok" : "stop"}">${c.passed ? "✓" : "✗"}</span>${esc(CHECKS[c.name] || c.name)}${c.detail ? ` <span class="muted small">${esc(c.detail)}</span>` : ""}</li>`).join("")}</ul>`);
+  } else {
+    parts.push('<p class="muted">No automatic checks were needed for this result.</p>');
+  }
+  parts.push(`<h4>Work done</h4><div class="figures">
+    <div class="figure"><b>${r.tools_used.length}</b><span>Tools used: ${r.tools_used.map(esc).join(", ") || "none"}</span></div>
+    <div class="figure"><b>${r.tokens_used.toLocaleString("en-IN")}</b><span>AI tokens used</span></div>
+  </div>`);
+  return parts.join("");
 }
 
 function decisionForm(r) {
-  return `<form id="decision" class="card" style="margin-top:14px">
-    <h2>Your decision</h2>
-    <label for="role">Approving as</label>
-    <select id="role">${r.pending_approvers.map(a => `<option>${esc(a)}</option>`).join("")}</select>
-    <label for="name">Your name</label><input id="name" required autocomplete="name">
-    <label for="note">Note</label><input id="note">
-    <label for="justification">Justification, if required above</label><input id="justification">
-    <details><summary>Change the order</summary>
-      <label for="vendor">Vendor code</label><input id="vendor" placeholder="${esc(r.order.vendor_id)}">
-      <label for="qty">Total quantity requested</label><input id="qty" type="number" min="1" placeholder="${r.order.stock.requested}">
-      <div class="row"><button type="button" data-action="edit">Apply change</button></div>
+  return `<h4>Your decision</h4><form id="decision" class="decision">
+    <label>Approving as<select id="role">${r.pending_approvers.map(a => `<option>${esc(a)}</option>`).join("")}</select></label>
+    <label>Your name<input id="name" required autocomplete="name"></label>
+    <label>Note<input id="note"></label>
+    <label>Justification, if needed above<input id="justification"></label>
+    <details class="full"><summary>Change the order</summary>
+      <div class="decision">
+        <label>Vendor code<input id="vendor" placeholder="${esc(r.order.vendor_id)}"></label>
+        <label>Total quantity requested<input id="qty" type="number" min="1" placeholder="${r.order.stock.requested}"></label>
+      </div>
+      <p><button type="button" class="secondary" data-action="edit">Apply change</button></p>
     </details>
-    <div class="row">
-      <button type="button" class="good" data-action="approve">Approve</button>
-      <button type="button" class="bad" data-action="reject">Reject</button>
+    <div class="actions full">
+      <button type="button" class="approve" data-action="approve">Approve</button>
+      <button type="button" class="reject" data-action="reject">Reject</button>
     </div>
-    <p class="error" id="decision-error" role="alert"></p>
+    <p class="form-error full" id="decision-error" role="alert"></p>
   </form>`;
 }
 
@@ -225,7 +553,7 @@ function wireDecision(form, id) {
       }
       form.querySelectorAll("button").forEach(b => b.disabled = true);
       try {
-        render(await api(`/requests/${id}/decisions`, {method: "POST",
+        show(await api(`/requests/${id}/decisions`, {method: "POST",
           headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)}));
         refreshList();
       } catch (error) {
@@ -236,30 +564,53 @@ function wireDecision(form, id) {
   });
 }
 
-document.getElementById("submit").addEventListener("click", async event => {
-  const state = document.getElementById("submit-state");
-  event.target.disabled = true;
-  state.textContent = "Checking policy, stock and prices. This can take up to a minute.";
+async function submitRequest() {
+  const button = $("submit"), error = $("submit-error");
+  button.disabled = true;
+  error.hidden = true;
+  $("loading").hidden = false;
+  let step = 0;
+  $("loading-text").textContent = STEPS[0];
+  const timer = setInterval(() => {
+    step = Math.min(step + 1, STEPS.length - 1);
+    $("loading-text").textContent = STEPS[step] + (step === STEPS.length - 1 ? ". Almost there." : "");
+  }, 9000);
   try {
-    const view = await api("/requests", {method: "POST",
+    const result = await api("/requests", {method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text: document.getElementById("text").value})});
-    current = view.id;
-    render(view);
+      body: JSON.stringify({text: $("text").value})});
+    current = result.id;
+    show(result, "decision");
+    $("result").scrollIntoView();
     refreshList();
-    state.textContent = "";
-  } catch (error) {
-    state.textContent = error.message;
+  } catch (e) {
+    error.textContent = e.message;
+    error.hidden = false;
   } finally {
-    event.target.disabled = false;
+    clearInterval(timer);
+    $("loading").hidden = true;
+    button.disabled = false;
   }
-});
-document.getElementById("key-save").addEventListener("click", () => {
-  localStorage.setItem("apiKey", document.getElementById("key").value.trim());
-  document.getElementById("key").value = "";
-  document.getElementById("key-card").hidden = true;
+}
+
+$("ask-form").addEventListener("submit", event => { event.preventDefault(); submitRequest(); });
+$("samples").querySelectorAll("button").forEach(button => button.addEventListener("click", () => {
+  $("text").value = button.dataset.text;
+  $("ask").scrollIntoView();
+  submitRequest();
+}));
+document.querySelectorAll(".result-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
+document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => {
+  selectTab(b.dataset.goto);
+  $("result").scrollIntoView();
+}));
+$("key-save").addEventListener("click", () => {
+  localStorage.setItem("apiKey", $("key").value.trim());
+  $("key").value = "";
+  $("key-card").hidden = true;
   refreshList().catch(() => {});
 });
+checkService();
 refreshList().catch(() => {});
 </script>
 </body>
