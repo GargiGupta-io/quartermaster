@@ -131,13 +131,7 @@ DOCUMENT_QUESTIONS = [
     ("How long is the warranty on Lotus Peak laptops?", "CON-104 page 2"),
     ("What penalty applies if Lotus Peak delivers late?", "CON-104 page 2"),
     ("What is the biggest single order we can give Lotus Peak?", "CON-104 page 3"),
-    pytest.param(
-        "When does Lotus Peak's probation end?",
-        "CON-104 page 1",
-        marks=pytest.mark.xfail(
-            strict=True, reason="Known miss: the vendor record and pages 2-3 rank higher."
-        ),
-    ),
+    ("When does Lotus Peak's probation end?", "CON-104 page 1"),
     ("How often are engineering laptops replaced?", "MEM-011 paragraph 2"),
     ("Where do I send my old laptop after getting a new one?", "MEM-011 paragraph 3"),
     ("Did Finance agree the network switches can come from one supplier?", "EML-022 message 2"),
@@ -151,14 +145,14 @@ DOCUMENT_QUESTIONS = [
 
 @pytest.mark.parametrize(("question", "expected"), QUESTIONS + DOCUMENT_QUESTIONS)
 def test_balanced_search_finds_the_right_passage(knowledge, question, expected):
-    """What the agent gets: the 3 best policy sections plus the 2 best other passages."""
-    hits = knowledge.search_balanced(question, policies=3, others=2)
+    """What the agent gets: the 3 best policy sections plus the 3 best other passages."""
+    hits = knowledge.search_balanced(question, policies=3, others=3)
     assert expected in [h.passage.citation for h in hits]
 
 
 def test_balanced_search_always_includes_policy_sections(knowledge):
-    hits = knowledge.search_balanced("laptop returns and refresh", policies=3, others=2)
-    assert [h.passage.doc_id.startswith("POL-") for h in hits] == [True] * 3 + [False] * 2
+    hits = knowledge.search_balanced("laptop returns and refresh", policies=3, others=3)
+    assert [h.passage.doc_id.startswith("POL-") for h in hits] == [True] * 3 + [False] * 3
 
 
 def test_results_are_ordered_and_cite_a_source(knowledge):

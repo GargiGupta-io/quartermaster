@@ -322,7 +322,7 @@ class KnowledgeBase:
             for metadata, distance in zip(result["metadatas"][0], result["distances"][0])
         ]
 
-    def search_balanced(self, query: str, policies: int = 3, others: int = 2) -> list[SearchHit]:
+    def search_balanced(self, query: str, policies: int = 3, others: int = 3) -> list[SearchHit]:
         """The best policy sections plus the best passages from every other document.
 
         Searching both together let a memo that mentions laptops in every paragraph push the
