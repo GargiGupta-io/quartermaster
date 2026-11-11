@@ -3,6 +3,8 @@
 Each rule names the policy section it enforces. Orders cover one product at a time.
 """
 
+import re
+
 from pydantic import BaseModel
 
 from procurement_agent.company_data import CompanyData
@@ -10,6 +12,32 @@ from procurement_agent.company_data import CompanyData
 GST_RATE = 0.18  # POL-001 1.4
 FX_BUFFER = 0.03  # POL-005 5.2
 PROBATION_ORDER_CAP = 500_000  # POL-003 3.1
+# POL-001 1.5. Matched as whole words in the requested item.
+PROHIBITED = {
+    "gift card": "gift cards and vouchers",
+    "gift cards": "gift cards and vouchers",
+    "voucher": "gift cards and vouchers",
+    "vouchers": "gift cards and vouchers",
+    "cryptocurrency": "cryptocurrency",
+    "bitcoin": "cryptocurrency",
+    "crypto": "cryptocurrency",
+    "alcohol": "alcohol",
+    "wine": "alcohol",
+    "beer": "alcohol",
+    "whisky": "alcohol",
+    "liquor": "alcohol",
+}
+
+
+def prohibited_category(text: str) -> str | None:
+    """The POL-001 1.5 category the text falls under, if any."""
+    lowered = text.lower()
+    for word, category in PROHIBITED.items():
+        if re.search(rf"\b{re.escape(word)}\b", lowered):
+            return category
+    return None
+
+
 HARDWARE_CAPS = {"LAP-STD-14": 85_000, "LAP-ENG-16": 140_000}  # POL-004 4.1
 ENGINEERING_ONLY = {"LAP-ENG-16"}  # POL-004 4.1
 
@@ -25,7 +53,7 @@ class UnknownRecord(ValueError):
 
 
 class StockPlan(BaseModel):
-    """How much comes from stock, a transfer or a purchase (POL-001 1.2)."""
+    """How much comes from stock, a transfer or a purchase (POL-001 section 1.2)."""
 
     requested: int
     from_local_stock: int
@@ -182,27 +210,33 @@ def evaluate_order(
     if office not in vendor.serves:
         problems.append(f"{vendor_id} does not deliver to {office}.")
     if vendor.status == "suspended":
-        problems.append(f"{vendor_id} is suspended and may not receive orders (POL-003 3.1).")
+        problems.append(
+            f"{vendor_id} is suspended and may not receive orders (POL-003 section 3.1)."
+        )
     if vendor.status == "probation" and total > PROBATION_ORDER_CAP:
         problems.append(
             f"{vendor_id} is on probation and this order is over its "
-            f"₹{PROBATION_ORDER_CAP:,} limit (POL-003 3.1)."
+            f"₹{PROBATION_ORDER_CAP:,} limit (POL-003 section 3.1)."
         )
     if foreign and inr_approved:
         problems.append(
             f"{vendor_id} bills in {vendor.currency} but an Approved INR vendor can supply "
-            f"this item (POL-005 5.1)."
+            f"this item (POL-005 section 5.1)."
         )
 
     needed_quotes = quotes_required(total)
     sole_source = stock.purchase_quantity > 0 and len(qualifying) < needed_quotes
     justification = []
     if sole_source:
-        justification.append("Sole-source purchase: record why (POL-003 3.2).")
+        justification.append("Sole-source purchase: record why (POL-003 section 3.2).")
     if lowest and lowest.id != vendor_id and not problems:
-        justification.append(f"{lowest.id} is cheaper: record why it was not used (POL-003 3.3).")
+        justification.append(
+            f"{lowest.id} is cheaper: record why it was not used (POL-003 section 3.3)."
+        )
     if hardware_exception:
-        justification.append("Hardware exception: record the business reason (POL-004 4.2).")
+        justification.append(
+            "Hardware exception: record the business reason (POL-004 section 4.2)."
+        )
 
     return OrderEvaluation(
         stock=stock,
