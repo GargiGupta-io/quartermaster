@@ -138,6 +138,7 @@ curl -X POST http://127.0.0.1:8765/requests/<id>/decisions \
 | `GET /requests/{id}` | One request in full |
 | `POST /requests/{id}/decisions` | Approve, reject or change an order |
 | `GET /health` | Database, search index and AI key status, for monitoring |
+| `GET /metrics` | Requests by status, median and slowest time, AI tokens used, usage-limit refusals |
 
 ## When things go wrong
 
