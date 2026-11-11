@@ -14,7 +14,13 @@ from pydantic import BaseModel, ValidationError
 from procurement_agent import guardrails, prompts, verify
 from procurement_agent.knowledge import KnowledgeBase, load_passages
 from procurement_agent.llm import LLMClient, LLMError, ModelUnavailable
-from procurement_agent.rules import offices, plan_stock
+from procurement_agent.rules import (
+    HARDWARE_CAPS,
+    PROBATION_ORDER_CAP,
+    offices,
+    plan_stock,
+    prohibited_category,
+)
 from procurement_agent.schemas import (
     Answer,
     Decision,
@@ -30,7 +36,7 @@ MAX_TOOL_ROUNDS = 8
 MAX_DRAFT_ATTEMPTS = 3
 MAX_CHECK_ATTEMPTS = 2  # the plan's "retry once": a first draft and one correction
 POLICY_RESULTS = 3  # plus DOCUMENT_RESULTS from contracts, memos, emails and records
-DOCUMENT_RESULTS = 2
+DOCUMENT_RESULTS = 3  # 2 missed contract pages in the evaluation (Q15)
 READ_ONLY_TOOLS = (
     "check_stock",
     "list_vendor_offers",
@@ -265,7 +271,7 @@ class ProcurementAgent:
             return update
 
         if parsed.item and not parsed.sku and not parsed.candidate_skus:
-            return update  # not a product we stock: check policy and refuse, don't ask for details
+            return update | {"response": self._unlisted_item(current, parsed)}
 
         known_offices = offices(data)
         known_departments = {b.department for b in data.budgets}
@@ -292,6 +298,31 @@ class ProcurementAgent:
                 questions=questions,
             )
         return update
+
+    def _unlisted_item(self, state: AgentState, parsed: ParsedRequest) -> dict:
+        """An item outside the catalogue is decided by code: refused if policy prohibits it,
+        otherwise sent to the procurement desk, which adds new items."""
+        category = prohibited_category(f"{parsed.item} {state['request_text']}")
+        if category:
+            reason = Reason(
+                statement=f"POL-001 prohibits buying {category} through procurement.",
+                citations=["POL-001 section 1.5"],
+            )
+            return self._finish(
+                state,
+                "refused",
+                f"This cannot be bought: company policy does not allow {category} to be "
+                "purchased through procurement.",
+                reasons=[reason.model_dump()],
+                sources=verify.sources([reason], self._passages),
+            )
+        return self._finish(
+            state,
+            "needs_clarification",
+            f"'{parsed.item}' is not in the company catalogue, so it cannot be ordered here. "
+            "The procurement desk can add new items.",
+            questions=["Would a product from the catalogue meet the need instead?"],
+        )
 
     @staticmethod
     def _is_question(state: AgentState) -> bool:
@@ -533,11 +564,41 @@ class ProcurementAgent:
         if not result.ok:
             return self._retry_or_fail(state, result.error or "That vendor cannot be evaluated.")
         order = result.data
-        if order["blocking_problems"]:
-            return self._retry_or_fail(state, " ".join(order["blocking_problems"]))
+        summary = draft.summary
         lowest = order["lowest_eligible_vendor"]
-        if lowest and lowest != draft.vendor_id and not parsed.business_reason:
-            return self._retry_or_fail(state, f"{lowest} is the cheapest eligible vendor.")
+        blocked = order["blocking_problems"]
+        cheaper = lowest and lowest != draft.vendor_id and not parsed.business_reason
+        if (blocked or cheaper) and lowest:
+            # Code decides the vendor: switch to the cheapest one policy allows, and say why.
+            why = " ".join(blocked) or f"{lowest} is cheaper (POL-003 section 3.3)."
+            switched = self.toolbox.run(
+                "evaluate_order",
+                {
+                    "sku": parsed.sku,
+                    "vendor_id": lowest,
+                    "requested_quantity": parsed.quantity,
+                    "office": parsed.office,
+                    "department": parsed.department,
+                    "fx_rate": fx_rate,
+                },
+            )
+            if not switched.ok or switched.data["blocking_problems"]:
+                return self._retry_or_fail(state, why)
+            order = switched.data
+            summary = (
+                f"The order goes to {order['vendor_name']} ({lowest}), the cheapest vendor "
+                f"policy allows for it. {draft.vendor_id} could not be used: {why}"
+            )
+            reasons = [r for r in reasons if draft.vendor_id not in r.statement]
+            reasons.append(
+                Reason(
+                    statement=f"{lowest} is the cheapest vendor policy allows for this order.",
+                    citations=["POL-003 section 3.3"],
+                )
+            )
+        elif blocked:
+            return self._retry_or_fail(state, " ".join(blocked))
+        draft = draft.model_copy(update={"summary": summary})
         if order["hardware_exception"] and not parsed.business_reason:
             return {
                 "response": self._finish(
@@ -566,6 +627,8 @@ class ProcurementAgent:
         response = ProcurementResponse(**state["response"])
         if response.status in ("failed", "needs_clarification"):
             return {}
+        for reason in response.reasons:
+            reason.citations = [verify.canonical_citation(c) for c in reason.citations]
 
         words = " ".join([response.summary, *(reason.statement for reason in response.reasons)])
         facts = {
@@ -574,6 +637,7 @@ class ProcurementAgent:
             "stock": response.stock.model_dump() if response.stock else None,
             "order": response.order.model_dump() if response.order else None,
             "tools": [e["result"] for e in state["tool_log"] if e["tool"] != SEARCH_TOOL],
+            "policy_limits": [PROBATION_ORDER_CAP, *HARDWARE_CAPS.values()],
         }
         records = {e["tool"]: e["result"] for e in state["tool_log"] if e["tool"] in verify.RECORDS}
         cited_text = [

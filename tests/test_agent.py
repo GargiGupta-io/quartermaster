@@ -5,7 +5,7 @@ import json
 import httpx
 import pytest
 
-from procurement_agent.agent import MAX_DRAFT_ATTEMPTS, MAX_TOOL_ROUNDS, ProcurementAgent
+from procurement_agent.agent import MAX_TOOL_ROUNDS, ProcurementAgent
 from procurement_agent.config import Settings
 from procurement_agent.knowledge import KnowledgeBase
 from procurement_agent.llm import LLMError, LLMReply, ModelUnavailable, ToolCall
@@ -204,34 +204,19 @@ def test_step_limit_stops_a_looping_model(run):
     assert len(llm.requests) == MAX_TOOL_ROUNDS + 1
 
 
-def test_forbidden_vendor_is_corrected(run):
-    response, llm = run(as_json(PARSED), DONE, draft(vendor="V-106"), draft(vendor="V-101"))
+def test_forbidden_vendor_is_replaced_by_code_without_another_ai_call(run):
+    response, llm = run(as_json(PARSED), DONE, draft(vendor="V-106"))
     assert response.status == "ready_for_approval"
     assert response.order.vendor_id == "V-101"
-    assert "suspended" in llm.requests[-1]["messages"][-1]["content"]
-
-
-def test_dearer_vendor_without_reason_is_corrected(run):
-    response, llm = run(as_json(PARSED), DONE, draft(vendor="V-103"), draft(vendor="V-101"))
-    assert response.order.vendor_id == "V-101"
-    assert "cheapest" in llm.requests[-1]["messages"][-1]["content"]
-
-
-def test_dearer_vendor_with_reason_is_allowed(run):
-    parsed = PARSED | {"business_reason": "Must arrive within 5 days"}
-    response, _ = run(as_json(parsed), DONE, draft(vendor="V-103"))
-    assert response.status == "ready_for_approval"
-    assert response.order.vendor_id == "V-103"
-    assert response.order.justification_required
-
-
-def test_model_that_keeps_breaking_policy_fails_safely(run):
-    response, _ = run(
-        as_json(PARSED), DONE, *[draft(vendor="V-106") for _ in range(MAX_DRAFT_ATTEMPTS)]
-    )
-    assert response.status == "failed"
-    assert response.order is None
     assert "suspended" in response.summary
+    assert ["POL-003 section 3.3"] in [r.citations for r in response.reasons]
+    assert llm.replies == []
+
+
+def test_dearer_vendor_without_reason_is_replaced_by_the_cheapest(run):
+    response, _ = run(as_json(PARSED), DONE, draft(vendor="V-103"))
+    assert response.order.vendor_id == "V-101"
+    assert "cheaper" in response.summary
 
 
 def test_invented_vendor_is_rejected(run):
@@ -274,9 +259,20 @@ def test_unlisted_item_is_refused_without_asking_for_details(run):
 
 def test_invented_product_code_is_treated_as_unlisted(run):
     parsed = PARSED | {"item": "yacht", "sku": "YACHT-1"}
-    response, _ = run(as_json(parsed), DONE, draft(decision="refuse", vendor=None))
-    assert response.status == "refused"
+    response, llm = run(as_json(parsed))
+    assert response.status == "needs_clarification"
+    assert "not in the company catalogue" in response.summary
     assert response.request.sku is None
+    assert len(llm.requests) == 1
+
+
+def test_prohibited_item_is_refused_by_code_with_the_policy(run):
+    parsed = PARSED | {"item": "gift cards", "sku": None}
+    response, llm = run(as_json(parsed), text="Buy 40,000 rupees of gift cards for Sales.")
+    assert response.status == "refused"
+    assert response.reasons[0].citations == ["POL-001 section 1.5"]
+    assert response.sources[0].citation == "POL-001 section 1.5"
+    assert len(llm.requests) == 1
 
 
 def test_ambiguous_item_asks_which_product(run):

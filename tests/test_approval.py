@@ -196,11 +196,10 @@ def test_support_check_being_down_flags_rather_than_passes(knowledge, toolbox):
     assert "could not run" in response.warnings[0]
 
 
-def test_unverifiable_refusal_needs_review_and_no_approval(knowledge, toolbox):
+def test_prohibited_item_never_reaches_approval(knowledge, toolbox):
     parsed = {"is_purchase_request": True, "item": "gift cards"}
-    bad = draft(decision="refuse", vendor=None, reasons=[])
-    _, response, _ = start(knowledge, toolbox, bad, bad, parsed=parsed)
-    assert response.status == "needs_review"
+    _, response, _ = start(knowledge, toolbox, parsed=parsed)
+    assert response.status == "refused"
     assert response.pending_approvers == []
 
 
