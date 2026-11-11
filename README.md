@@ -96,7 +96,7 @@ exact citation:
 | Vendor rate card | Spreadsheet, structured | `PRL-Q4 row 18` |
 | Vendor register | Database records, structured | `REG-VND record V-106` |
 
-Search returns the three best policy sections plus the two best passages from other documents.
+Search returns the three best policy sections plus the three best passages from other documents.
 Searching everything together let the laptop memo push the laptop policy out of the results.
 The embedding model runs locally, so documents never leave the machine for indexing.
 
@@ -105,8 +105,8 @@ The embedding model runs locally, so documents never leave the machine for index
 Measured on the real AI model (`openai/gpt-oss-120b` on Groq) unless stated. A full
 evaluation of about 40 requests is in progress.
 
-- **Search:** the right passage appears in the results for 27 of 28 test questions. The miss
-  is listed in the tests rather than hidden.
+- **Search:** the right passage appears in the results for all 29 test questions. The last
+  miss (a contract page ranked third) was fixed by returning three non-policy passages, not two.
 - **Purchase requests:** the laptop, transfer, over-budget, foreign-currency, hardware-exception
   and prohibited-item scenarios in `data/SCENARIOS.md` give the expected result.
 - **Questions:** one question for each document type was answered from the right source with
