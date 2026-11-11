@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from procurement_agent.agent import NotWaitingForApproval, ProcurementAgent
 from procurement_agent.config import Settings
 from procurement_agent.knowledge import KnowledgeBase
+from procurement_agent.limits import UsageLimits, visitor_id
 from procurement_agent.llm import GroqClient, LLMClient
 from procurement_agent.purchase_orders import PurchaseOrderStore
 from procurement_agent.schemas import Decision, ProcurementResponse
@@ -141,8 +142,13 @@ class Service:
         return RequestView(id=request_id, text=self.get(request_id).text, response=response)
 
 
-def create_app(service: Service | None = None, api_key: str | None = None) -> FastAPI:
-    """api_key=None reads it from the environment; an empty key leaves the API open."""
+def create_app(
+    service: Service | None = None,
+    api_key: str | None = None,
+    limits: UsageLimits | None = None,
+) -> FastAPI:
+    """api_key=None reads it from the environment; an empty key leaves the API open.
+    limits=None reads them from the environment."""
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
     settings = Settings()
@@ -152,11 +158,25 @@ def create_app(service: Service | None = None, api_key: str | None = None) -> Fa
             "warning", detail="API_KEY is not set: the API is open to anyone who can reach it."
         )
 
+    if limits is None:
+        limits = UsageLimits(
+            settings.limit_per_visitor, settings.limit_window_seconds, settings.limit_per_day
+        )
+
     header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
     def check_key(supplied: str | None = Security(header)) -> None:
         if required_key and not secrets.compare_digest(supplied or "", required_key):
             raise HTTPException(401, "A valid access key is required.")
+
+    def check_limits(request: Request) -> None:
+        visitor = visitor_id(request.headers, request.client.host if request.client else "")
+        refusal = limits.check(visitor)
+        if refusal:
+            log_event("limited", detail=refusal.message)
+            raise HTTPException(
+                429, refusal.message, headers={"Retry-After": str(refusal.retry_after)}
+            )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -168,11 +188,13 @@ def create_app(service: Service | None = None, api_key: str | None = None) -> Fa
 
     app = FastAPI(
         title="Quartermaster",
-        description="AI procurement assistant: purchase requests and questions about company documents, with human "
-        "approval. Send the access key in the X-API-Key header.",
+        description="AI procurement assistant: purchase requests and questions about company "
+        "documents, with human approval. If the service has an access key, send it in the "
+        "X-API-Key header. Calls that use the AI are limited per visitor and per day.",
         lifespan=lifespan,
     )
     protected = [Depends(check_key)]
+    uses_ai = [Depends(check_key), Depends(check_limits)]
 
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
@@ -198,7 +220,7 @@ def create_app(service: Service | None = None, api_key: str | None = None) -> Fa
     def page() -> str:
         return (STATIC / "index.html").read_text(encoding="utf-8")
 
-    @app.post("/requests", status_code=201, dependencies=protected)
+    @app.post("/requests", status_code=201, dependencies=uses_ai)
     def submit(body: NewRequest, request: Request) -> RequestView:
         return request.app.state.service.submit(body.text)
 
@@ -213,7 +235,7 @@ def create_app(service: Service | None = None, api_key: str | None = None) -> Fa
             raise HTTPException(404, "Request not found")
         return found
 
-    @app.post("/requests/{request_id}/decisions", dependencies=protected)
+    @app.post("/requests/{request_id}/decisions", dependencies=uses_ai)
     def decide(request_id: str, decision: Decision, request: Request) -> RequestView:
         service = request.app.state.service
         if not service.get(request_id):

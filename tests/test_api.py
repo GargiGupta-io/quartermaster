@@ -7,9 +7,11 @@ from fastapi.testclient import TestClient
 
 from procurement_agent.api import Service, create_app
 from procurement_agent.knowledge import KnowledgeBase
+from procurement_agent.limits import UsageLimits
 from test_agent import DONE, PARSED, ScriptedLLM, as_json, draft
 
 KEY = "test-access-key"
+NO_LIMITS = UsageLimits(per_visitor=0, window_seconds=1, per_day=0)
 
 
 @pytest.fixture(scope="module")
@@ -20,7 +22,9 @@ def knowledge(tmp_path_factory):
 @pytest.fixture
 def setup(knowledge, tmp_path):
     llm = ScriptedLLM(as_json(PARSED), DONE, draft())
-    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key="")) as client:
+    with TestClient(
+        create_app(Service(tmp_path, llm, knowledge), api_key="", limits=NO_LIMITS)
+    ) as client:
         yield client, llm, tmp_path
 
 
@@ -96,7 +100,9 @@ def test_bad_request_text_is_rejected(setup, text):
 def test_requests_survive_a_service_restart(setup, knowledge):
     client, _, data_dir = setup
     created = submit(client)
-    with TestClient(create_app(Service(data_dir, ScriptedLLM(), knowledge))) as restarted:
+    with TestClient(
+        create_app(Service(data_dir, ScriptedLLM(), knowledge), limits=NO_LIMITS)
+    ) as restarted:
         waiting = restarted.get(f"/requests/{created['id']}").json()
         assert waiting["response"]["pending_approvers"]
         assert decide(restarted, created["id"], "Department Head").status_code == 200
@@ -107,7 +113,9 @@ def test_requests_survive_a_service_restart(setup, knowledge):
 @pytest.fixture
 def locked(knowledge, tmp_path):
     llm = ScriptedLLM(as_json(PARSED), DONE, draft())
-    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key=KEY)) as client:
+    with TestClient(
+        create_app(Service(tmp_path, llm, knowledge), api_key=KEY, limits=NO_LIMITS)
+    ) as client:
         yield client
 
 
@@ -146,7 +154,9 @@ def test_health_reports_what_it_checked(setup):
 def test_health_fails_without_an_ai_key(knowledge, tmp_path):
     llm = ScriptedLLM()
     llm.configured = False
-    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key="")) as client:
+    with TestClient(
+        create_app(Service(tmp_path, llm, knowledge), api_key="", limits=NO_LIMITS)
+    ) as client:
         response = client.get("/health")
     assert response.status_code == 503
     assert response.json()["ai_key_configured"] is False
@@ -161,3 +171,16 @@ def test_finished_requests_are_logged_without_their_text(setup, caplog):
     assert finished[0]["status"] == "ready_for_approval"
     assert finished[0]["tokens"] > 0
     assert "laptops" not in caplog.text
+
+
+def test_too_many_requests_get_a_clear_refusal(knowledge, tmp_path):
+    llm = ScriptedLLM(as_json(PARSED), DONE, draft())
+    limits = UsageLimits(per_visitor=1, window_seconds=600, per_day=0)
+    app = create_app(Service(tmp_path, llm, knowledge), api_key="", limits=limits)
+    with TestClient(app) as client:
+        assert submit(client)["response"]["status"] == "ready_for_approval"
+        refused = client.post("/requests", json={"text": "20 laptops for Pune engineering"})
+        assert refused.status_code == 429
+        assert "try again in about 10 minutes" in refused.json()["detail"]
+        assert 590 < int(refused.headers["Retry-After"]) <= 601
+        assert client.get("/requests").status_code == 200  # reading is never limited
