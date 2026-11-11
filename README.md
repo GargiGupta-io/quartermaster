@@ -99,7 +99,7 @@ evaluation of about 40 requests is in progress.
 
 ## Try it
 
-**Online:** https://quartermaster-a2cb.onrender.com (ask the author for the access key). The first visit after a quiet spell takes about a minute while the free server wakes up.
+**Online:** https://quartermaster-a2cb.onrender.com, open to anyone. The first visit after a quiet spell takes about a minute while the free server wakes up.
 
 **On your own computer** (needs [uv](https://docs.astral.sh/uv/) and a free key from
 [console.groq.com/keys](https://console.groq.com/keys), no card needed):
@@ -111,6 +111,10 @@ uv run uvicorn procurement_agent.api:app --port 8765
 ```
 
 Then open http://127.0.0.1:8765/. Set `API_KEY` in `.env` to require an access key.
+
+Calls that use the AI are limited to 5 per visitor every 10 minutes and 100 a day for the
+whole service, so an open demo cannot use up the free AI allowance. Change them with
+`LIMIT_PER_VISITOR`, `LIMIT_WINDOW_SECONDS` and `LIMIT_PER_DAY`; 0 turns a limit off.
 
 ### Using the API directly
 
@@ -139,7 +143,7 @@ curl -X POST http://127.0.0.1:8765/requests/<id>/decisions \
 
 - **One product per request.** "20 laptops and 20 monitors" is not handled as one order yet,
   and the no-splitting rule (POL-002 2.3) is not checked across separate orders.
-- **Approver identity is not verified.** Anyone with the access key can act as any approver.
+- **Approver identity is not verified.** Any visitor can act as any approver.
 - **Free-tier limits.** Groq's free plan allows about 1,000 requests and 8,000 tokens a minute,
   so a busy period means waits. Free hosting sleeps when idle and loses saved requests when it restarts.
 - **Fictional data.** The rules are realistic, but the company and documents are invented.
@@ -164,7 +168,8 @@ uv run python scripts/build_documents.py   # rebuild the PDF, Word, Excel and em
 
 The service runs as a Docker container on Render's free plan, which needs no card. In
 Render, choose **New > Blueprint**, select this repository, and enter the two values it asks
-for: `GROQ_API_KEY` and `API_KEY` (the access key reviewers type into the page). `render.yaml`
+for: `GROQ_API_KEY`, and optionally `API_KEY` if you want visitors to need an access key
+(leave it empty for an open demo). `render.yaml`
 holds the rest. Every push to `main` redeploys.
 
 Free instances sleep after 15 minutes without visitors, so the first visit after a quiet spell
