@@ -71,6 +71,15 @@ class Service:
 
         self._knowledge = knowledge
         self._ai_configured = getattr(llm, "configured", True)
+        self._started = time.time()
+        self._stats = {
+            "requests": 0,
+            "by_status": {},
+            "seconds": [],
+            "tokens": 0,
+            "decisions": 0,
+            "limited": 0,
+        }
 
     def submit(self, text: str) -> RequestView:
         request_id = str(uuid.uuid4())
@@ -79,17 +88,47 @@ class Service:
             self._db.commit()
         started = time.perf_counter()
         response = self.agent.run(text, thread_id=request_id)
+        seconds = time.perf_counter() - started
+        with self._lock:
+            stats = self._stats
+            stats["requests"] += 1
+            stats["by_status"][response.status] = stats["by_status"].get(response.status, 0) + 1
+            stats["seconds"] = [*stats["seconds"][-499:], seconds]
+            stats["tokens"] += response.tokens_used
         # The request text is not logged: it can hold names or other personal details.
         log_event(
             "request_finished",
             request_id=request_id,
             status=response.status,
-            seconds=round(time.perf_counter() - started, 2),
+            seconds=round(seconds, 2),
             tokens=response.tokens_used,
             tools=response.tools_used,
             checks_passed=response.verification.passed if response.verification else None,
         )
         return RequestView(id=request_id, text=text, response=response)
+
+    def count_limited(self) -> None:
+        with self._lock:
+            self._stats["limited"] += 1
+
+    def metrics(self) -> dict:
+        """Usage since the service started. Kept in memory, so a restart resets it."""
+        with self._lock:
+            stats = {**self._stats, "seconds": sorted(self._stats["seconds"])}
+        seconds = stats["seconds"]
+        return {
+            "since": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self._started)),
+            "requests": stats["requests"],
+            "by_status": stats["by_status"],
+            "median_seconds": round(seconds[len(seconds) // 2], 1) if seconds else None,
+            "slowest_seconds": round(seconds[-1], 1) if seconds else None,
+            "tokens_used": stats["tokens"],
+            "average_tokens": round(stats["tokens"] / stats["requests"])
+            if stats["requests"]
+            else 0,
+            "decisions": stats["decisions"],
+            "refused_by_usage_limits": stats["limited"],
+        }
 
     def health(self) -> dict:
         try:
@@ -131,6 +170,7 @@ class Service:
     def decide(self, request_id: str, decision: Decision) -> RequestView:
         with self._lock:
             response = self.agent.decide(request_id, decision)
+            self._stats["decisions"] += 1
         log_event(
             "decision",
             request_id=request_id,
@@ -174,6 +214,7 @@ def create_app(
         refusal = limits.check(visitor)
         if refusal:
             log_event("limited", detail=refusal.message)
+            request.app.state.service.count_limited()
             raise HTTPException(
                 429, refusal.message, headers={"Retry-After": str(refusal.retry_after)}
             )
@@ -215,6 +256,11 @@ def create_app(
         """Whether the service can take requests. Open to monitors, so it reveals no data."""
         report = request.app.state.service.health()
         return JSONResponse(report, status_code=200 if report["status"] == "ok" else 503)
+
+    @app.get("/metrics", tags=["service"], dependencies=protected)
+    def metrics(request: Request) -> dict:
+        """Requests by status, speed, AI tokens used and usage-limit refusals since start."""
+        return request.app.state.service.metrics()
 
     @app.get("/", response_class=HTMLResponse)
     def page() -> str:

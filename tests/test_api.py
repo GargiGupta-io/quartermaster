@@ -184,3 +184,19 @@ def test_too_many_requests_get_a_clear_refusal(knowledge, tmp_path):
         assert "try again in about 10 minutes" in refused.json()["detail"]
         assert 590 < int(refused.headers["Retry-After"]) <= 601
         assert client.get("/requests").status_code == 200  # reading is never limited
+
+
+def test_metrics_count_requests_decisions_and_limits(knowledge, tmp_path):
+    llm = ScriptedLLM(as_json(PARSED), DONE, draft())
+    limits = UsageLimits(per_visitor=2, window_seconds=600, per_day=0)
+    with TestClient(create_app(Service(tmp_path, llm, knowledge), api_key="", limits=limits)) as c:
+        created = submit(c)
+        decide(c, created["id"], "Department Head")
+        c.post("/requests", json={"text": "20 laptops for Pune engineering"})
+        numbers = c.get("/metrics").json()
+    assert numbers["requests"] == 1
+    assert numbers["by_status"] == {"ready_for_approval": 1}
+    assert numbers["decisions"] == 1
+    assert numbers["refused_by_usage_limits"] == 1
+    assert numbers["tokens_used"] > 0
+    assert "laptops" not in str(numbers)
