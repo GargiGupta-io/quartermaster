@@ -553,6 +553,7 @@ class ProcurementAgent:
             "order": response.order.model_dump() if response.order else None,
             "tools": [e["result"] for e in state["tool_log"] if e["tool"] != SEARCH_TOOL],
         }
+        records = {e["tool"]: e["result"] for e in state["tool_log"] if e["tool"] in verify.RECORDS}
         cited_text = [
             self._passages[c].text
             for r in response.reasons
@@ -561,7 +562,7 @@ class ProcurementAgent:
         ]
         checks = [
             verify.check_numbers(words, [facts, cited_text]),
-            verify.check_citations(response.reasons, self._passages),
+            verify.check_citations(response.reasons, self._passages, records),
             verify.check_vendors(words, self.toolbox.data),
         ]
         tokens = state["tokens"]
@@ -571,6 +572,7 @@ class ProcurementAgent:
                 response.reasons,
                 self._passages,
                 {k: v for k, v in facts.items() if k in ("request", "stock", "order")},
+                records,
             )
             checks.append(support)
             tokens += used
@@ -581,7 +583,8 @@ class ProcurementAgent:
                 "response": None,
                 "tokens": tokens,
                 "correction": f"Your last answer failed checking: {result.problems} "
-                "Correct it using only the evidence.",
+                "Correct it using only the evidence. Valid citations are the document passages "
+                f"in the evidence and these records: {', '.join(records) or 'none'}.",
             }
 
         response.verification = VerificationResult(**result.model_dump())
@@ -589,7 +592,7 @@ class ProcurementAgent:
         response.policy_basis = verify.policy_basis(
             response.stock, response.order, self.toolbox.data
         )
-        response.sources = verify.sources(response.reasons, self._passages)
+        response.sources = verify.sources(response.reasons, self._passages, records)
         parsed = ParsedRequest(**state["parsed"])
         if parsed.budget_inr and response.order and response.order.total_inr > parsed.budget_inr:
             response.warnings.append(

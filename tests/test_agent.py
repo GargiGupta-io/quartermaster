@@ -125,6 +125,31 @@ def test_full_purchase_takes_figures_from_code(run):
     assert llm.replies == []
 
 
+def test_a_record_the_agent_looked_up_can_be_cited(run):
+    stock_reason = {
+        "statement": "4 laptops are already in stock in Pune, so stock is used first.",
+        "citations": ["POL-001 section 1.2", "check_stock"],
+    }
+    response, _ = run(
+        as_json(PARSED),
+        calls(("check_stock", PARSED | {"requested_quantity": 20})),
+        DONE,
+        draft(reasons=[stock_reason]),
+    )
+    assert response.status == "ready_for_approval"
+    assert response.verification.passed
+    by_citation = {s.citation: s for s in response.sources}
+    assert by_citation["check_stock"].source_type == "Company records"
+    assert by_citation["check_stock"].title == "Stock levels by office"
+
+
+def test_citing_a_record_that_was_never_looked_up_fails(run):
+    reason = {"statement": "The budget allows it.", "citations": ["check_budget"]}
+    response, _ = run(as_json(PARSED), DONE, draft(reasons=[reason]), draft(reasons=[reason]))
+    assert response.status == "needs_review"
+    assert "check_budget" in response.verification.checks[1].detail
+
+
 def test_the_model_is_never_offered_purchase_order_creation(run):
     _, llm = run(as_json(PARSED), DONE, draft())
     offered = [t["function"]["name"] for t in llm.requests[1]["tools"]]
