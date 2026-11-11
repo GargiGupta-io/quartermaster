@@ -285,7 +285,7 @@ const badge = status => {
   return `<span class="pill ${tone}">${esc(text)}</span>`;
 };
 const $ = id => document.getElementById(id);
-let current = null, view = null, tab = "decision";
+let current = null, view = null, tab = "decision", approverKeys = false;
 
 async function api(path, options = {}) {
   const headers = {...(options.headers || {})};
@@ -308,6 +308,7 @@ async function checkService() {
   const dot = $("service-dot"), text = $("service-status");
   try {
     const response = await fetch("/health");
+    approverKeys = Boolean((await response.clone().json().catch(() => ({}))).approver_keys);
     dot.className = "dot " + (response.ok ? "ok" : "caution");
     text.textContent = response.ok ? "Service ready" : "Service limited";
   } catch {
@@ -451,6 +452,7 @@ function decisionForm(r) {
     <label>Your name<input id="name" required autocomplete="name"></label>
     <label>Note<input id="note"></label>
     <label>Justification, if needed above<input id="justification"></label>
+    ${approverKeys ? '<label class="full">Approver key for this role<input id="approver-key" type="password" autocomplete="off"></label>' : ""}
     <details class="full"><summary>Change the order</summary>
       <div class="decision">
         <label>Vendor code<input id="vendor" placeholder="${esc(r.order.vendor_id)}"></label>
@@ -482,8 +484,11 @@ function wireDecision(form, id) {
       }
       form.querySelectorAll("button").forEach(b => b.disabled = true);
       try {
-        show(await api(`/requests/${id}/decisions`, {method: "POST",
-          headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)}));
+        const headers = {"Content-Type": "application/json"};
+        const approverKey = form.querySelector("#approver-key");
+        if (approverKey) headers["X-Approver-Key"] = approverKey.value.trim();
+        show(await api(`/requests/${id}/decisions`, {method: "POST", headers,
+          body: JSON.stringify(payload)}));
         refreshList();
       } catch (error) {
         form.querySelector("#decision-error").textContent = error.message;
