@@ -311,8 +311,8 @@ async function checkService() {
     dot.className = "dot " + (response.ok ? "ok" : "caution");
     text.textContent = response.ok ? "Service ready" : "Service limited";
   } catch {
-    dot.className = "dot stop";
-    text.textContent = "Service offline";
+    dot.className = "dot caution";
+    text.textContent = "Reconnecting";
   }
 }
 
@@ -536,6 +536,7 @@ $("key-save").addEventListener("click", () => {
   refreshList().catch(() => {});
 });
 checkService();
+setInterval(checkService, 30000);
 refreshList().catch(() => {});
 </script>
 </body>
