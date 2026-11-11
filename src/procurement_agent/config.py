@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
+    # Used when the main model is rate limited or down. It has its own free allowance.
+    # Empty turns the backup off.
+    groq_fallback_model: str = "openai/gpt-oss-20b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
     fx_base_url: str = "https://api.frankfurter.dev/v1"
     data_dir: Path = Path(".data")
