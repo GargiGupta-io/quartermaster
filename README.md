@@ -99,7 +99,7 @@ evaluation of about 40 requests is in progress.
 
 ## Try it
 
-**Online:** link to follow.
+**Online:** https://quartermaster-a2cb.onrender.com (ask the author for the access key). The first visit after a quiet spell takes about a minute while the free server wakes up.
 
 **On your own computer** (needs [uv](https://docs.astral.sh/uv/) and a free key from
 [console.groq.com/keys](https://console.groq.com/keys), no card needed):
