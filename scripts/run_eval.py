@@ -29,7 +29,11 @@ ROOT = Path(__file__).resolve().parents[1]
 EVALS = ROOT / "evals"
 RESULTS = EVALS / "results"
 BUSY = "busy or unavailable"
-LABELS = {"baseline": "First prompts", "current": "Current prompts"}
+LABELS = {
+    "baseline": "First prompts",
+    "before-fixes": "Before evaluation fixes",
+    "current": "Current",
+}
 
 
 def load_cases() -> list[dict]:
