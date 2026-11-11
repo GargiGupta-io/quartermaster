@@ -86,6 +86,13 @@ def test_invented_or_missing_citations_fail(reasons):
     assert not check_citations(reasons, PASSAGES).passed
 
 
+def test_records_count_as_citations_only_when_looked_up():
+    reasons = [Reason(statement="x", citations=["check_stock"])]
+    assert check_citations(reasons, PASSAGES, {"check_stock": {"available": 4}}).passed
+    assert not check_citations(reasons, PASSAGES, {}).passed
+    assert not check_citations(reasons, PASSAGES).passed
+
+
 def test_vendors_must_exist():
     assert check_vendors("Buy from V-101, not V-106.", DATA).passed
     assert not check_vendors("Buy from V-777.", DATA).passed

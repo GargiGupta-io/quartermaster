@@ -21,6 +21,16 @@ _VENDOR_ID = re.compile(r"\bV-\d+\b")
 _NUMBER = re.compile(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s*(lakh|crore)?", re.IGNORECASE)
 _ROUNDED_TOLERANCE = 0.01  # "13.6 lakh" for 13,59,360
 
+# Company records the AI looked up with a tool can be cited by the tool's name, such as
+# "check_stock". Only tools actually called in this run count.
+RECORDS = {
+    "check_stock": ("Stock levels by office", "data/company/stock.json"),
+    "check_budget": ("Department budgets", "data/company/budgets.json"),
+    "list_vendor_offers": ("Vendor offers", "data/company/catalog.json"),
+    "evaluate_order": ("Order costing by the policy rules", "rules.py"),
+    "get_exchange_rate": ("Live exchange rate", "api.frankfurter.dev"),
+}
+
 
 class Check(BaseModel):
     name: str
@@ -80,8 +90,14 @@ def check_numbers(words: str, known_facts) -> Check:
     return Check(name="figures", passed=True)
 
 
-def check_citations(reasons: list[Reason], passages: dict[str, Passage]) -> Check:
-    invented = sorted({c for r in reasons for c in r.citations if c not in passages})
+def check_citations(
+    reasons: list[Reason], passages: dict[str, Passage], records: dict | None = None
+) -> Check:
+    """Every citation must be a real document passage or a record looked up in this run."""
+    records = records or {}
+    invented = sorted(
+        {c for r in reasons for c in r.citations if c not in passages and c not in records}
+    )
     uncited = [r.statement for r in reasons if not r.citations]
     if invented:
         detail = f"These citations do not exist: {', '.join(invented)}."
@@ -105,14 +121,18 @@ def check_vendors(words: str, data: CompanyData) -> Check:
 
 
 def check_support(
-    llm: LLMClient, reasons: list[Reason], passages: dict[str, Passage], facts: dict
+    llm: LLMClient,
+    reasons: list[Reason],
+    passages: dict[str, Passage],
+    facts: dict,
+    records: dict | None = None,
 ) -> tuple[Check, int]:
     """Ask the model, separately, whether each reason is backed by its cited text."""
     statements = [
         {
             "index": index,
             "statement": reason.statement,
-            "cited_text": {c: passages[c].text for c in reason.citations if c in passages},
+            "cited_text": {c: _cited_text(c, passages, records or {}) for c in reason.citations},
         }
         for index, reason in enumerate(reasons)
     ]
@@ -143,6 +163,12 @@ def check_support(
         detail = f"Not supported by the cited text: {failures or 'not every reason was checked'}."
         return Check(name="support", passed=False, detail=detail), reply.tokens
     return Check(name="support", passed=True), reply.tokens
+
+
+def _cited_text(citation: str, passages: dict[str, Passage], records: dict) -> str:
+    if citation in passages:
+        return passages[citation].text
+    return json.dumps(records.get(citation), default=str)
 
 
 class _Verdict(BaseModel):
@@ -185,17 +211,34 @@ def policy_basis(
     ]
 
 
-def sources(reasons: list[Reason], passages: dict[str, Passage]) -> list[Source]:
-    """Every passage the reasons cite, labelled with its document type."""
-    cited = dict.fromkeys(c for r in reasons for c in r.citations if c in passages)
-    return [
-        Source(
-            citation=c,
-            title=passages[c].doc_title,
-            source_type=passages[c].source_type,
-            structured=passages[c].structured,
-            file=passages[c].source_file,
-            text=passages[c].text,
-        )
-        for c in cited
-    ]
+def sources(
+    reasons: list[Reason], passages: dict[str, Passage], records: dict | None = None
+) -> list[Source]:
+    """Every passage or record the reasons cite, labelled with its type."""
+    records = records or {}
+    found = []
+    for c in dict.fromkeys(c for r in reasons for c in r.citations):
+        if c in passages:
+            found.append(
+                Source(
+                    citation=c,
+                    title=passages[c].doc_title,
+                    source_type=passages[c].source_type,
+                    structured=passages[c].structured,
+                    file=passages[c].source_file,
+                    text=passages[c].text,
+                )
+            )
+        elif c in records:
+            title, file = RECORDS.get(c, (c, ""))
+            found.append(
+                Source(
+                    citation=c,
+                    title=title,
+                    source_type="Live API" if c == "get_exchange_rate" else "Company records",
+                    structured=True,
+                    file=file,
+                    text=json.dumps(records[c], default=str)[:800],
+                )
+            )
+    return found
