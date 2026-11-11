@@ -8,323 +8,253 @@
   :root {
     --ink:#15213a; --muted:#5a6578; --faint:#8a94a6; --line:#dfe4ec; --bg:#f3f5f9;
     --card:#ffffff; --soft:#f7f9fc; --accent:#b8661b; --accent-soft:#fbf1e6;
-    --navy:#1d3461; --navy-soft:#e8eef8;
+    --navy:#1d3461; --navy-deep:#14264a; --navy-soft:#e8eef8;
     --good:#1c6b44; --good-soft:#e3f2ea; --warn:#93600d; --warn-soft:#fcf1dc;
     --bad:#a3271f; --bad-soft:#f9e4e2;
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
-    --radius:16px; --shadow:0 1px 2px rgba(21,33,58,.05),0 8px 24px rgba(21,33,58,.06);
+    --shadow:0 1px 2px rgba(21,33,58,.05),0 10px 30px rgba(21,33,58,.07);
   }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
-  html { scroll-behavior:smooth; scroll-padding-top:84px; }
-  body { margin:0; color:var(--ink); font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;
-         background:var(--bg) radial-gradient(rgba(29,52,97,.10) 1px, transparent 1.2px) 0 0/22px 22px; }
-  a { color:inherit; }
+  body { margin:0; color:var(--ink); background:var(--bg); font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
   h1,h2,h3 { margin:0; }
-  .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
-  .eyebrow { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-             color:var(--accent); margin:0 0 10px; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 28px; }
+  .label { font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
   .muted { color:var(--muted); }
   .small { font-size:13px; }
+  button { font:inherit; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:default; }
+  textarea, input, select { width:100%; font:inherit; color:var(--ink); background:var(--card);
+         border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  textarea:focus, input:focus, select:focus { outline:2px solid var(--navy-soft); border-color:var(--navy); }
 
-  /* Header */
-  .site-header { position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
-                 background:rgba(243,245,249,.85); border-bottom:1px solid var(--line); }
-  .site-header .wrap { display:flex; align-items:center; gap:16px; height:68px; }
-  .brand { display:flex; align-items:center; gap:10px; text-decoration:none; font-weight:700; }
-  .brand-mark { display:grid; place-items:center; width:36px; height:36px; border-radius:10px;
-                background:var(--navy); color:#fff; font:700 14px var(--serif); letter-spacing:.02em; }
-  .tabs-nav { margin:0 auto; display:flex; gap:2px; padding:4px; border:1px solid var(--line);
-              border-radius:999px; background:var(--card); }
-  .tabs-nav a, .tabs-nav button { border:0; background:none; font:600 13px/1 inherit; font-family:inherit;
-              color:var(--muted); padding:9px 14px; border-radius:999px; cursor:pointer; text-decoration:none; }
-  .tabs-nav a:hover, .tabs-nav button:hover { color:var(--ink); background:var(--soft); }
-  .status { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600;
-            letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700;
-          letter-spacing:.06em; background:var(--line); color:var(--muted); }
+  /* Top bar */
+  .topbar { border-bottom:1px solid var(--line); background:var(--card); }
+  .topbar .wrap { display:flex; align-items:center; justify-content:space-between; height:60px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.01em; }
+  .brand-mark { width:28px; height:28px; border-radius:6px; background:var(--navy); position:relative; }
+  .brand-mark::after { content:""; position:absolute; inset:7px; border:2px solid #fff; border-radius:2px;
+                       border-top-color:var(--accent); }
+  .status { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--faint); }
+  .dot.ok { background:var(--good); box-shadow:0 0 0 4px var(--good-soft); }
+  .dot.caution { background:var(--warn); } .dot.stop { background:var(--bad); }
+
+  /* Opening: split */
+  .opening { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:56px; align-items:center; padding:64px 0 56px; }
+  .opening h1 { font:700 clamp(40px,5.4vw,64px)/1.05 var(--serif); letter-spacing:-.015em; }
+  .opening h1 em { font-style:normal; color:var(--accent); }
+  .pitch { margin:20px 0 0; font-size:17px; color:var(--muted); max-width:470px; }
+  .facts { display:flex; gap:28px; margin-top:32px; padding-top:22px; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .facts div b { display:block; font:700 26px/1 var(--serif); color:var(--navy); }
+  .facts div span { font-size:13px; color:var(--muted); }
+  .composer { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+  .composer-head { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .composer-head b { font-size:14px; }
+  .composer form { padding:18px; }
+  .composer textarea { min-height:110px; resize:vertical; border-radius:10px; font-size:16px; }
+  .composer-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px; }
+  .primary { border:0; border-radius:10px; padding:12px 20px; font-weight:700; color:#fff; background:var(--navy); }
+  .primary:hover { background:var(--navy-deep); }
+  .samples { padding:0 18px 18px; }
+  .samples .label { display:block; margin-bottom:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { border:1px solid var(--line); background:var(--soft); border-radius:6px; padding:6px 10px;
+          font-size:13px; font-weight:600; color:var(--ink); }
+  .chip:hover { border-color:var(--accent); background:var(--accent-soft); }
+  .loading { display:flex; align-items:center; gap:10px; margin:12px 0 0; font-size:14px; font-weight:600; color:var(--navy); }
+  .bar { flex:0 0 80px; height:4px; border-radius:2px; background:var(--navy-soft); overflow:hidden; position:relative; }
+  .bar::after { content:""; position:absolute; inset:0 60% 0 0; background:var(--accent); border-radius:2px; animation:slide 1.2s infinite ease-in-out; }
+  @keyframes slide { 0% { transform:translateX(-100%); } 100% { transform:translateX(250%); } }
+  .form-error { color:var(--bad); font-weight:600; margin:12px 0 0; font-size:14px; }
+  .key-card { margin:0 18px 18px; padding:14px; border:1px solid var(--warn); background:var(--warn-soft); border-radius:10px; }
+  .key-card p { margin:0 0 8px; font-size:14px; }
+  .key-row { display:flex; gap:8px; }
+  .secondary { border:1px solid var(--line); border-radius:8px; padding:9px 14px; font-weight:600; background:var(--card); white-space:nowrap; }
+  @media (max-width:900px) { .opening { grid-template-columns:1fr; gap:32px; padding-top:40px; } }
+
+  /* Safeguard band */
+  .band { background:var(--navy); color:#fff; }
+  .band .wrap { display:grid; grid-template-columns:1.1fr repeat(4,1fr); gap:28px; padding-top:30px; padding-bottom:30px; align-items:start; }
+  .band h2 { font:700 22px/1.25 var(--serif); }
+  .band h2 span { color:#f2b671; }
+  .band div b { display:block; font-size:14px; margin-bottom:4px; }
+  .band div p { margin:0; font-size:13px; color:#c3cde0; }
+  .band .num { display:inline-block; font-size:11px; font-weight:700; color:#f2b671; margin-bottom:6px; letter-spacing:.08em; }
+  @media (max-width:900px) { .band .wrap { grid-template-columns:1fr 1fr; } .band h2 { grid-column:1/-1; } }
+
+  /* Workspace */
+  .workspace { display:grid; grid-template-columns:300px minmax(0,1fr); gap:28px; padding:48px 0 24px; align-items:start; }
+  @media (max-width:900px) { .workspace { grid-template-columns:1fr; } }
+  .side h3 { font:700 18px var(--serif); margin-bottom:12px; }
+  .side section + section { margin-top:32px; }
+  .timeline { list-style:none; margin:0; padding:0; }
+  .timeline li { position:relative; padding:0 0 18px 30px; }
+  .timeline li::before { content:attr(data-n); position:absolute; left:0; top:0; width:20px; height:20px; border-radius:50%;
+                         background:var(--card); border:1.5px solid var(--navy); color:var(--navy); font-size:11px; font-weight:700;
+                         display:grid; place-items:center; }
+  .timeline li::after { content:""; position:absolute; left:10px; top:22px; bottom:2px; width:1.5px; background:var(--line); }
+  .timeline li:last-child::after { display:none; }
+  .timeline b { display:block; font-size:14px; }
+  .timeline span { font-size:13px; color:var(--muted); }
+  #list { display:flex; flex-direction:column; gap:2px; }
+  #list button { text-align:left; border:0; border-left:3px solid transparent; background:none; padding:10px 12px; border-radius:0 8px 8px 0; }
+  #list button:hover { background:var(--card); }
+  #list button.active { background:var(--card); border-left-color:var(--accent); }
+  #list button span { display:block; font-size:14px; margin-bottom:6px; }
+
+  .result { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); min-height:380px; }
+  .result-top { padding:20px 26px 0; border-bottom:1px solid var(--line); }
+  .result-top .label { display:block; margin-bottom:8px; }
+  .result-tabs { display:flex; gap:26px; margin-top:16px; overflow-x:auto; }
+  .result-tab { border:0; background:none; padding:0 0 12px; font-weight:600; font-size:14px; color:var(--muted);
+                border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+  .result-tab[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent); }
+  .result-tab .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:4px; border-radius:999px;
+                       background:var(--accent); color:#fff; font-size:11px; text-align:center; }
+  #detail { padding:22px 26px 28px; }
+  .empty { text-align:center; padding:56px 20px; color:var(--muted); }
+  .empty b { display:block; font:700 20px var(--serif); color:var(--ink); margin-bottom:6px; }
+  .result-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:4px; }
+  .result-head h3 { font:700 20px/1.35 var(--serif); }
+  .pill { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; white-space:nowrap;
+          background:var(--line); color:var(--muted); }
   .pill.ok { background:var(--good-soft); color:var(--good); }
   .pill.caution { background:var(--warn-soft); color:var(--warn); }
   .pill.stop { background:var(--bad-soft); color:var(--bad); }
-  @media (max-width:860px) { .tabs-nav { display:none; } .status { margin-left:auto; } }
-
-  /* Hero */
-  .hero { text-align:center; padding:72px 0 40px; }
-  .hero h1 { font:700 clamp(48px,8vw,88px)/1 var(--serif); letter-spacing:-.02em; }
-  .hero-text { max-width:620px; margin:22px auto 0; font-size:18px; color:var(--muted); }
-  .tagline { margin:18px 0 0; font-weight:700; font-size:17px; }
-  .context { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;
-             max-width:760px; margin:40px auto 0; text-align:left; }
-  .context article { background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-                     padding:18px 20px; box-shadow:var(--shadow); }
-  .context span { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
-  .context strong { display:block; margin:4px 0; font-size:17px; }
-  .context p { margin:0; color:var(--muted); font-size:14px; }
-  @media (max-width:640px) { .context { grid-template-columns:1fr; } }
-
-  /* Sections */
-  section.block { padding:48px 0; }
-  .block-title { font:700 clamp(30px,4vw,42px)/1.15 var(--serif); }
-  .block-lead { max-width:640px; margin:10px 0 0; color:var(--muted); }
-  .centered { text-align:center; }
-  .centered .block-lead { margin-left:auto; margin-right:auto; }
-  hr.rule { border:0; border-top:1px solid var(--line); margin:0; }
-
-  /* Ask */
-  .ask { margin-top:24px; padding:20px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
-         display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:end; }
-  .field span { display:block; font-size:14px; color:var(--muted); margin-bottom:6px; }
-  textarea, input, select { width:100%; font:inherit; color:var(--ink); background:var(--card);
-         border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
-  textarea { resize:vertical; min-height:56px; }
-  textarea:focus, input:focus, select:focus { outline:2px solid var(--navy-soft); border-color:var(--navy); }
-  button { font:inherit; cursor:pointer; }
-  .primary { border:0; border-radius:12px; padding:14px 22px; font-weight:700; color:#fff;
-             background:var(--navy); box-shadow:0 6px 16px rgba(29,52,97,.25); }
-  .primary:hover { background:#16294d; }
-  button:disabled { opacity:.6; cursor:default; }
-  .guidance { margin:10px 0 0; text-align:right; font-size:12px; font-weight:600; color:var(--faint); }
-  .loading { display:flex; align-items:center; gap:10px; margin-top:16px; font-weight:600; color:var(--navy); }
-  .dots { display:inline-flex; gap:4px; }
-  .dots i { width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pulse 1s infinite ease-in-out; }
-  .dots i:nth-child(2) { animation-delay:.15s; } .dots i:nth-child(3) { animation-delay:.3s; }
-  @keyframes pulse { 0%,100% { opacity:.25; transform:scale(.8); } 50% { opacity:1; transform:scale(1); } }
-  .form-error { color:var(--bad); font-weight:600; margin:12px 0 0; }
-  .key-card { margin-top:16px; padding:16px; border:1px solid var(--warn); background:var(--warn-soft);
-              border-radius:12px; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
-  .key-card p { grid-column:1/-1; margin:0; }
-  @media (max-width:640px) { .ask, .key-card { grid-template-columns:1fr; } .guidance { text-align:left; } }
-
-  /* What's inside */
-  .inside { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:28px; }
-  @media (max-width:900px) { .inside { grid-template-columns:1fr; } }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-           box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; }
-  .panel-visual { padding:22px; flex:1; display:flex; flex-direction:column; justify-content:center; background:var(--soft)
-           linear-gradient(rgba(29,52,97,.05) 1px, transparent 1px) 0 0/100% 26px;
-           border-bottom:1px solid var(--line); }
-  .panel-copy { padding:20px 22px 22px; }
-  .panel-copy .eyebrow { margin-bottom:6px; }
-  .panel-copy strong { display:block; font:700 22px/1.25 var(--serif); }
-  .panel-copy p { margin:8px 0 0; color:var(--muted); font-size:14px; }
-  .steps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .tile { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
-  .tile span { display:block; font-size:11px; font-weight:700; letter-spacing:.06em;
-               text-transform:uppercase; color:var(--accent); }
-  .tile b { display:block; margin-top:4px; font-size:14px; line-height:1.3; }
-  .samples { display:grid; gap:8px; }
-  .sample { border:1px solid var(--line); background:var(--card); border-radius:999px;
-            padding:8px 14px; text-align:center; }
-  .sample:hover { border-color:var(--navy); background:var(--navy-soft); }
-  .sample b { display:block; font-size:13px; }
-  .sample small { display:block; color:var(--muted); font-size:11px; }
-  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-  .chip { font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px;
-          border:1px solid var(--line); background:var(--card); color:var(--muted); }
-  .feature { background:var(--navy-soft); border:1px solid #cfdbef; border-radius:12px; padding:14px; margin-bottom:10px; }
-  .feature span { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--navy); }
-  .feature b { display:block; font:700 20px/1.25 var(--serif); margin-top:4px; }
-
-  /* Result */
-  .result-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:28px; }
-  @media (max-width:760px) { .result-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  .result-tab { border:1px solid var(--line); background:var(--card); border-radius:14px; padding:12px;
-                box-shadow:var(--shadow); color:var(--muted); }
-  .result-tab small { display:block; font-size:11px; font-weight:700; color:var(--faint); }
-  .result-tab b { display:block; font-size:17px; color:var(--ink); }
-  .result-tab span { font-size:12px; font-weight:600; }
-  .result-tab[aria-selected="true"] { border-color:var(--navy); background:var(--navy-soft); }
-  .result-tab[aria-selected="true"] b { color:var(--navy); }
-  .result-tab .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:4px; border-radius:999px;
-                       background:var(--accent); color:#fff; font-size:11px; }
-  .result-body { margin-top:18px; background:var(--card); border:1px solid var(--line);
-                 border-radius:var(--radius); box-shadow:var(--shadow); padding:26px 28px; min-height:180px; }
-  .result-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start;
-                 padding-bottom:16px; margin-bottom:6px; border-bottom:1px solid var(--line); }
-  .result-head h3 { font:700 22px/1.3 var(--serif); }
-  .result-body h4 { margin:22px 0 8px; font-size:12px; font-weight:700; letter-spacing:.08em;
-                    text-transform:uppercase; color:var(--faint); }
-  .answer { font-size:17px; margin:14px 0 0; }
-  .figures { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
-  .figure { background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
-  .figure b { display:block; font-size:18px; }
+  #detail h4 { margin:22px 0 8px; font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
+  .answer { font-size:17px; margin:12px 0 0; }
+  .figures { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .figure { padding:12px 14px; border-right:1px solid var(--line); }
+  .figure:last-child { border-right:0; }
+  .figure b { display:block; font-size:17px; }
   .figure span { font-size:12px; color:var(--muted); }
-  .notice { padding:12px 14px; border-radius:12px; margin:12px 0 0; }
+  .notice { padding:10px 14px; border-radius:8px; margin:12px 0 0; border-left:3px solid; }
   .notice.ok { background:var(--good-soft); color:var(--good); }
   .notice.caution { background:var(--warn-soft); color:var(--warn); }
   .notice.stop { background:var(--bad-soft); color:var(--bad); }
   ul.clean { margin:0; padding-left:20px; }
   ul.clean li { margin:4px 0; }
-  .cite { display:inline-block; font-size:12px; font-weight:600; color:var(--navy);
-          background:var(--navy-soft); border-radius:6px; padding:1px 6px; margin-left:4px; }
-  details { border:1px solid var(--line); border-radius:12px; padding:10px 14px; margin:8px 0; background:var(--soft); }
+  .cite { display:inline-block; font-size:12px; font-weight:600; color:var(--navy); background:var(--navy-soft);
+          border-radius:4px; padding:1px 6px; margin-left:4px; }
+  details { border-bottom:1px solid var(--line); padding:10px 0; }
   summary { cursor:pointer; font-weight:600; }
   details p { margin:8px 0 0; }
-  .kind { font-size:11px; font-weight:600; color:var(--muted); border:1px solid var(--line);
-          background:var(--card); border-radius:999px; padding:1px 8px; margin-left:6px; }
+  .kind { font-size:11px; font-weight:600; color:var(--muted); background:var(--soft); border:1px solid var(--line);
+          border-radius:4px; padding:1px 6px; margin-left:6px; }
+  .checks { padding:0; margin:0; }
   .checks li { list-style:none; margin:6px 0; }
-  .checks { padding:0; }
   .tick { display:inline-block; width:20px; font-weight:700; }
   .tick.ok { color:var(--good); } .tick.stop { color:var(--bad); }
   .decision { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
   .decision label { font-size:13px; color:var(--muted); }
   .decision label input, .decision label select { margin-top:4px; }
   .decision .full { grid-column:1/-1; }
+  .decision details { border:0; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; }
-  .approve { border:0; border-radius:12px; padding:12px 20px; font-weight:700; color:#fff; background:var(--good); }
-  .reject { border:1px solid var(--bad); border-radius:12px; padding:12px 20px; font-weight:700; color:var(--bad); background:var(--card); }
-  .secondary { border:1px solid var(--line); border-radius:12px; padding:10px 16px; font-weight:600; background:var(--card); }
+  .approve { border:0; border-radius:8px; padding:11px 20px; font-weight:700; color:#fff; background:var(--good); }
+  .reject { border:1px solid var(--bad); border-radius:8px; padding:11px 20px; font-weight:700; color:var(--bad); background:var(--card); }
   @media (max-width:640px) { .decision { grid-template-columns:1fr; } }
 
-  /* Recent */
-  .recent { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-top:24px; }
-  .recent button { text-align:left; border:1px solid var(--line); background:var(--card); border-radius:14px;
-                   padding:14px 16px; box-shadow:var(--shadow); }
-  .recent button:hover, .recent button.active { border-color:var(--navy); }
-  .recent button span { display:block; margin-bottom:8px; font-size:14px; }
-
-  footer { border-top:1px solid var(--line); margin-top:40px; }
-  footer .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; padding:22px 24px; font-size:13px; color:var(--muted); }
+  footer { margin-top:40px; border-top:1px solid var(--line); background:var(--card); }
+  footer .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:20px; padding-bottom:20px; font-size:13px; color:var(--muted); }
   footer b { color:var(--ink); }
 </style>
 </head>
 <body>
-<nav class="site-header" aria-label="Primary">
+<div class="topbar">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="brand-mark">QM</span><span>Quartermaster</span></a>
-    <div class="tabs-nav">
-      <a href="#top">Overview</a>
-      <a href="#ask">Ask</a>
-      <button type="button" data-goto="decision">Decision</button>
-      <button type="button" data-goto="sources">Sources</button>
-      <button type="button" data-goto="approval">Approval</button>
-      <button type="button" data-goto="checks">Checks</button>
-    </div>
-    <div class="status"><span>Service</span><strong class="pill" id="service-status">Checking</strong></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Quartermaster</div>
+    <div class="status"><span class="dot" id="service-dot"></span><span id="service-status">Checking service</span></div>
   </div>
-</nav>
+</div>
 
-<main id="top">
-  <header class="hero wrap">
-    <p class="eyebrow">Procurement desk</p>
-    <h1>Quartermaster</h1>
-    <p class="hero-text">An AI assistant that checks company policy, stock, prices and budget,
-      shows where every answer came from, and waits for the right managers before anything is bought.</p>
-    <p class="tagline">Check the rules. Show the source. Ask before buying.</p>
-    <div class="context">
-      <article>
-        <span>Requests</span>
-        <strong>Buy something</strong>
-        <p>Describe what you need. It works out stock, vendor, total with GST and who must approve.</p>
-      </article>
-      <article>
-        <span>Questions</span>
-        <strong>Ask about the rules</strong>
-        <p>Ask about a policy, contract or vendor. The answer cites the exact page, row or email.</p>
-      </article>
+<main>
+  <div class="wrap opening" id="ask">
+    <div>
+      <p class="label">Kestrel Works procurement desk</p>
+      <h1>Buy the right thing, <em>by the rules.</em></h1>
+      <p class="pitch">Quartermaster reads a purchase request, checks policy, stock, prices and budget,
+        and prepares an order that the right managers approve. Ask it about any policy, contract
+        or vendor and it shows exactly where the answer came from.</p>
+      <div class="facts">
+        <div><b>11</b><span>company documents</span></div>
+        <div><b>6</b><span>file types searched</span></div>
+        <div><b>4</b><span>checks on every answer</span></div>
+      </div>
     </div>
-  </header>
 
-  <section class="block wrap" id="ask" aria-labelledby="ask-title">
-    <h2 class="block-title" id="ask-title">Start a request</h2>
-    <p class="block-lead">Type a purchase request or a question, or pick a sample below.</p>
-    <form class="ask" id="ask-form">
-      <label class="field">
-        <span>Request or question</span>
-        <textarea id="text" rows="2" maxlength="2000" required>We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh.</textarea>
-      </label>
-      <button class="primary" id="submit" type="submit">Check request</button>
-    </form>
-    <p class="guidance">Kestrel Works is a fictional company, and no real orders are placed. Each visitor can send 5 requests every 10 minutes.</p>
-    <div class="loading" id="loading" hidden aria-live="polite">
-      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="loading-text">Reading the request</span>
+    <div class="composer">
+      <div class="composer-head"><b>New request or question</b><span class="small muted">5 per visitor every 10 min</span></div>
+      <form id="ask-form">
+        <textarea id="text" maxlength="2000" required aria-label="Request or question">We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh.</textarea>
+        <div class="composer-actions">
+          <span class="small muted">Fictional company. No real orders are placed.</span>
+          <button class="primary" id="submit" type="submit">Check request</button>
+        </div>
+        <div class="loading" id="loading" hidden aria-live="polite"><span class="bar" aria-hidden="true"></span><span id="loading-text">Reading the request</span></div>
+        <p class="form-error" id="submit-error" role="alert" hidden></p>
+      </form>
+      <div class="key-card" id="key-card" hidden>
+        <p><b>Access key needed.</b> <span id="key-state">This copy of the service is private. Ask its owner for the key.</span></p>
+        <div class="key-row"><input id="key" type="password" autocomplete="off" aria-label="Access key"><button class="secondary" id="key-save" type="button">Use key</button></div>
+      </div>
+      <div class="samples">
+        <span class="label">Or try a sample</span>
+        <div class="chips" id="samples">
+          <button type="button" class="chip" title="Stock first, two approvers" data-text="We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh.">Laptops for Pune</button>
+          <button type="button" class="chip" title="Transfer instead of buying" data-text="10 standard laptops for the Mumbai Sales team, budget 8 lakh.">Laptops for Mumbai</button>
+          <button type="button" class="chip" title="CFO exception needed" data-text="20 monitors for Operations in Mumbai, budget 5 lakh.">Monitors over budget</button>
+          <button type="button" class="chip" title="Foreign currency, sole source" data-text="2 48-port network switches for the Pune engineering lab, budget 3 lakh.">Network switches</button>
+          <button type="button" class="chip" title="Answered from the contract" data-text="How long is the warranty on Lotus Peak laptops?">Warranty question</button>
+          <button type="button" class="chip" title="Refused by policy" data-text="Buy 40,000 rupees of gift cards for the Sales team.">Gift cards</button>
+        </div>
+      </div>
     </div>
-    <p class="form-error" id="submit-error" role="alert" hidden></p>
-    <div class="key-card" id="key-card" hidden>
-      <p><b>Access key needed.</b> <span id="key-state">This copy of the service is private. Ask its owner for the key.</span></p>
-      <input id="key" type="password" autocomplete="off" aria-label="Access key">
-      <button class="secondary" id="key-save" type="button">Use this key</button>
+  </div>
+
+  <section class="band" aria-label="Safeguards">
+    <div class="wrap">
+      <h2>The AI proposes. <span>Code decides.</span></h2>
+      <div><span class="num">01</span><b>Figures from code</b><p>Totals, tax and currency are calculated, never written by the AI.</p></div>
+      <div><span class="num">02</span><b>Sources re-checked</b><p>Every citation must exist and support its statement.</p></div>
+      <div><span class="num">03</span><b>Approved vendors only</b><p>Suspended or unknown vendors are caught before you see them.</p></div>
+      <div><span class="num">04</span><b>People sign off</b><p>No order is created until every required manager approves.</p></div>
     </div>
   </section>
 
-  <section class="block wrap" aria-labelledby="inside-title">
-    <h2 class="block-title" id="inside-title">What's inside?</h2>
-    <p class="block-lead">How a request is handled, samples to try, and the safeguards that keep the AI honest.</p>
-    <div class="inside">
-      <article class="panel">
-        <div class="panel-visual">
-          <div class="steps">
-            <div class="tile"><span>1. Understand</span><b>Product, quantity, office, budget</b></div>
-            <div class="tile"><span>2. Investigate</span><b>Policies, stock, vendors, exchange rate</b></div>
-            <div class="tile"><span>3. Check</span><b>Every figure and source verified</b></div>
-            <div class="tile"><span>4. Approve</span><b>Each manager signs off before an order</b></div>
-          </div>
-        </div>
-        <div class="panel-copy">
-          <p class="eyebrow">How it works</p>
-          <strong>Four steps, one record</strong>
-          <p>The workflow pauses for approval and picks up where it left off, even after a restart.</p>
-        </div>
-      </article>
-      <article class="panel">
-        <div class="panel-visual">
-          <p class="eyebrow">Try a sample</p>
-          <div class="samples" id="samples">
-            <button type="button" class="sample" data-text="We need 20 standard laptops for the new Engineering hires in Pune, budget 15 lakh."><b>Laptops for Pune</b><small>Stock first, two approvers</small></button>
-            <button type="button" class="sample" data-text="10 standard laptops for the Mumbai Sales team, budget 8 lakh."><b>Laptops for Mumbai</b><small>Transfer instead of buying</small></button>
-            <button type="button" class="sample" data-text="20 monitors for Operations in Mumbai, budget 5 lakh."><b>Monitors over budget</b><small>CFO exception needed</small></button>
-            <button type="button" class="sample" data-text="2 48-port network switches for the Pune engineering lab, budget 3 lakh."><b>Network switches</b><small>Foreign currency, sole source</small></button>
-            <button type="button" class="sample" data-text="How long is the warranty on Lotus Peak laptops?"><b>Warranty question</b><small>Answered from the contract</small></button>
-            <button type="button" class="sample" data-text="Buy 40,000 rupees of gift cards for the Sales team."><b>Gift cards</b><small>Refused by policy</small></button>
-          </div>
-        </div>
-        <div class="panel-copy">
-          <p class="eyebrow">Sample cases</p>
-          <strong>Six cases, six rules</strong>
-          <p>Each sample tests a different policy rule. Click one to run it.</p>
-        </div>
-      </article>
-      <article class="panel">
-        <div class="panel-visual">
-          <div class="feature"><span>Safeguard</span><b>The AI proposes; code decides</b></div>
-          <div class="steps">
-            <div class="tile"><span>Figures</span><b>Totals and tax from code</b></div>
-            <div class="tile"><span>Sources</span><b>Each citation re-checked</b></div>
-          </div>
-          <div class="chips"><span class="chip">Groq</span><span class="chip">LangGraph</span><span class="chip">Chroma</span><span class="chip">FastAPI</span><span class="chip">Render</span></div>
-        </div>
-        <div class="panel-copy">
-          <p class="eyebrow">Built to be trusted</p>
-          <strong>Checked before you see it</strong>
-          <p>A failed check gets one correction, then goes to a person. No order is created without approval.</p>
-        </div>
-      </article>
-    </div>
-  </section>
+  <div class="wrap workspace">
+    <aside class="side">
+      <section>
+        <h3>How it works</h3>
+        <ol class="timeline">
+          <li data-n="1"><b>Understand</b><span>Product, quantity, office and budget</span></li>
+          <li data-n="2"><b>Investigate</b><span>Policies, stock, vendors and exchange rate</span></li>
+          <li data-n="3"><b>Check</b><span>One correction allowed, then a person reviews</span></li>
+          <li data-n="4"><b>Approve</b><span>Pauses for each manager, then creates the order</span></li>
+        </ol>
+      </section>
+      <section>
+        <h3>Recent requests</h3>
+        <div id="list"><p class="muted small">None yet.</p></div>
+      </section>
+    </aside>
 
-  <hr class="rule">
-
-  <section class="block wrap" id="result" aria-labelledby="result-title">
-    <div class="centered">
-      <p class="eyebrow">Result</p>
-      <h2 class="block-title" id="result-title">From request to purchase order</h2>
-    </div>
-    <div class="result-tabs" role="tablist">
-      <button class="result-tab" role="tab" data-tab="decision" aria-selected="true"><small>01</small><b>Decision</b><span>Answer and order</span></button>
-      <button class="result-tab" role="tab" data-tab="sources" aria-selected="false"><small>02</small><b>Sources</b><span>Reasons and documents</span></button>
-      <button class="result-tab" role="tab" data-tab="approval" aria-selected="false"><small>03</small><b>Approval<span class="count" id="approval-count" hidden></span></b><span>Sign-off and order</span></button>
-      <button class="result-tab" role="tab" data-tab="checks" aria-selected="false"><small>04</small><b>Checks</b><span>Verification and cost</span></button>
-    </div>
-    <div class="result-body" id="detail" role="tabpanel">
-      <p class="muted">Run a request or open one below, and the result appears here.</p>
-    </div>
-  </section>
-
-  <section class="block wrap" aria-labelledby="recent-title">
-    <h2 class="block-title" id="recent-title">Recent requests</h2>
-    <p class="block-lead">The latest requests on this server. Free hosting clears them when it restarts.</p>
-    <div class="recent" id="list"><p class="muted">None yet.</p></div>
-  </section>
+    <section class="result" id="result" aria-label="Result">
+      <div class="result-top">
+        <span class="label">Result</span>
+        <div class="result-tabs" role="tablist">
+          <button class="result-tab" role="tab" data-tab="decision" aria-selected="true">Decision</button>
+          <button class="result-tab" role="tab" data-tab="sources" aria-selected="false">Sources</button>
+          <button class="result-tab" role="tab" data-tab="approval" aria-selected="false">Approval<span class="count" id="approval-count" hidden></span></button>
+          <button class="result-tab" role="tab" data-tab="checks" aria-selected="false">Checks</button>
+        </div>
+      </div>
+      <div id="detail" role="tabpanel">
+        <div class="empty"><b>Nothing here yet</b>Send a request or pick a sample, and the decision, sources, approvals and checks appear here.</div>
+      </div>
+    </section>
+  </div>
 </main>
 
 <footer>
@@ -375,22 +305,21 @@ async function api(path, options = {}) {
 }
 
 async function checkService() {
-  const pill = $("service-status");
+  const dot = $("service-dot"), text = $("service-status");
   try {
     const response = await fetch("/health");
-    const ok = response.ok;
-    pill.textContent = ok ? "Ready" : "Limited";
-    pill.className = "pill " + (ok ? "ok" : "caution");
+    dot.className = "dot " + (response.ok ? "ok" : "caution");
+    text.textContent = response.ok ? "Service ready" : "Service limited";
   } catch {
-    pill.textContent = "Offline";
-    pill.className = "pill stop";
+    dot.className = "dot stop";
+    text.textContent = "Service offline";
   }
 }
 
 async function refreshList() {
   const items = await api("/requests");
   const list = $("list");
-  if (!items.length) { list.innerHTML = '<p class="muted">None yet.</p>'; return; }
+  if (!items.length) { list.innerHTML = '<p class="muted small">None yet.</p>'; return; }
   list.innerHTML = items.map(item => `
     <button class="${item.id === current ? "active" : ""}" data-id="${esc(item.id)}">
       <span>${esc(item.text.length > 90 ? item.text.slice(0, 90) + "…" : item.text)}</span>
@@ -600,10 +529,6 @@ $("samples").querySelectorAll("button").forEach(button => button.addEventListene
   submitRequest();
 }));
 document.querySelectorAll(".result-tab").forEach(t => t.addEventListener("click", () => selectTab(t.dataset.tab)));
-document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => {
-  selectTab(b.dataset.goto);
-  $("result").scrollIntoView();
-}));
 $("key-save").addEventListener("click", () => {
   localStorage.setItem("apiKey", $("key").value.trim());
   $("key").value = "";
