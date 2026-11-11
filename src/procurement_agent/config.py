@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # When set, every API call except the page and health check needs this key in the
     # X-API-Key header. Left empty, the service is open to anyone, protected by the limits below.
     api_key: str = ""
+    # Optional per-role approver keys, as "Role=key" pairs separated by semicolons, such as
+    # "Department Head=k1;Finance Controller=k2". When set, a decision is accepted only with
+    # the key for the role it is made as. Left empty, anyone may approve (the open demo).
+    approver_keys: str = ""
     # Calls that use the AI (new requests and approval decisions). 0 turns a limit off.
     limit_per_visitor: int = 5
     limit_window_seconds: int = 600

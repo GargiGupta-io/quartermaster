@@ -182,10 +182,21 @@ class Service:
         return RequestView(id=request_id, text=self.get(request_id).text, response=response)
 
 
+def parse_approver_keys(raw: str) -> dict[str, str]:
+    """ "Department Head=k1;CFO=k2" as a role-to-key mapping. Blank entries are ignored."""
+    keys = {}
+    for pair in raw.split(";"):
+        role, _, key = pair.partition("=")
+        if role.strip() and key.strip():
+            keys[role.strip()] = key.strip()
+    return keys
+
+
 def create_app(
     service: Service | None = None,
     api_key: str | None = None,
     limits: UsageLimits | None = None,
+    approver_keys: dict[str, str] | None = None,
 ) -> FastAPI:
     """api_key=None reads it from the environment; an empty key leaves the API open.
     limits=None reads them from the environment."""
@@ -203,7 +214,11 @@ def create_app(
             settings.limit_per_visitor, settings.limit_window_seconds, settings.limit_per_day
         )
 
+    if approver_keys is None:
+        approver_keys = parse_approver_keys(settings.approver_keys)
+
     header = APIKeyHeader(name="X-API-Key", auto_error=False)
+    approver_header = APIKeyHeader(name="X-Approver-Key", auto_error=False)
 
     def check_key(supplied: str | None = Security(header)) -> None:
         if required_key and not secrets.compare_digest(supplied or "", required_key):
@@ -254,7 +269,7 @@ def create_app(
     @app.get("/health", tags=["service"])
     def health(request: Request) -> JSONResponse:
         """Whether the service can take requests. Open to monitors, so it reveals no data."""
-        report = request.app.state.service.health()
+        report = request.app.state.service.health() | {"approver_keys": bool(approver_keys)}
         return JSONResponse(report, status_code=200 if report["status"] == "ok" else 503)
 
     @app.get("/metrics", tags=["service"], dependencies=protected)
@@ -282,7 +297,19 @@ def create_app(
         return found
 
     @app.post("/requests/{request_id}/decisions", dependencies=uses_ai)
-    def decide(request_id: str, decision: Decision, request: Request) -> RequestView:
+    def decide(
+        request_id: str,
+        decision: Decision,
+        request: Request,
+        approver_key: str | None = Security(approver_header),
+    ) -> RequestView:
+        """Approve, reject or change an order. With approver keys switched on, send the key for
+        the role in the X-Approver-Key header."""
+        if approver_keys:
+            expected = approver_keys.get(decision.role, "")
+            if not expected or not secrets.compare_digest(approver_key or "", expected):
+                log_event("approver_key_refused", role=decision.role)
+                raise HTTPException(403, f"The approver key for {decision.role} is required.")
         service = request.app.state.service
         if not service.get(request_id):
             raise HTTPException(404, "Request not found")

@@ -5,7 +5,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from procurement_agent.api import Service, create_app
+from procurement_agent.api import Service, create_app, parse_approver_keys
 from procurement_agent.knowledge import KnowledgeBase
 from procurement_agent.limits import UsageLimits
 from test_agent import DONE, PARSED, ScriptedLLM, as_json, draft
@@ -200,3 +200,37 @@ def test_metrics_count_requests_decisions_and_limits(knowledge, tmp_path):
     assert numbers["refused_by_usage_limits"] == 1
     assert numbers["tokens_used"] > 0
     assert "laptops" not in str(numbers)
+
+
+ROLE_KEYS = {"Department Head": "dh-key", "Finance Controller": "fc-key"}
+
+
+def test_approver_keys_are_parsed():
+    assert parse_approver_keys("Department Head=a; CFO = b ;;bad") == {
+        "Department Head": "a",
+        "CFO": "b",
+    }
+
+
+def test_with_approver_keys_each_role_needs_its_own_key(knowledge, tmp_path):
+    llm = ScriptedLLM(as_json(PARSED), DONE, draft())
+    app = create_app(
+        Service(tmp_path, llm, knowledge), api_key="", limits=NO_LIMITS, approver_keys=ROLE_KEYS
+    )
+    with TestClient(app) as client:
+        created = submit(client)
+        url = f"/requests/{created['id']}/decisions"
+        body = {"role": "Department Head", "action": "approve", "name": "A Person"}
+        assert client.post(url, json=body).status_code == 403
+        wrong_role = client.post(url, json=body, headers={"X-Approver-Key": "fc-key"})
+        assert wrong_role.status_code == 403
+        right = client.post(url, json=body, headers={"X-Approver-Key": "dh-key"})
+        assert right.status_code == 200
+        assert client.get("/health").json()["approver_keys"] is True
+
+
+def test_without_approver_keys_anyone_may_decide(setup):
+    client, _, _ = setup
+    created = submit(client)
+    assert decide(client, created["id"], "Department Head").status_code == 200
+    assert client.get("/health").json()["approver_keys"] is False
