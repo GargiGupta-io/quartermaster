@@ -6,6 +6,7 @@ section, a PDF page, a Word paragraph, a spreadsheet row, an email message or a 
 
 import hashlib
 import json
+import logging
 import mailbox
 import re
 from email.utils import parseaddr
@@ -20,12 +21,17 @@ from openpyxl import load_workbook
 from pydantic import BaseModel
 from pypdf import PdfReader
 
+from procurement_agent import guardrails
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 POLICY_DIR = DATA_DIR / "policies"
 INDEX_DIR = ROOT / ".index"
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 COLLECTION = "documents"
+MAX_DOCUMENT_BYTES = 10_000_000
+MAX_PASSAGE_CHARS = 4_000
+log = logging.getLogger("procurement_agent")
 
 _SECTION_HEADING = re.compile(r"^## (\d+\.\d+) (.+)$", re.MULTILINE)
 _DOC_FILE_NAME = re.compile(r"^([A-Z]{3}-[A-Z0-9]+)-(.+)$")
@@ -230,9 +236,32 @@ def load_passages(data_dir: Path = DATA_DIR) -> list[Passage]:
     ]
     for path in sorted((data_dir / "documents").glob("*")):
         if path.suffix in _READERS:
-            passages += _READERS[path.suffix](path)
+            passages += _read_safely(path)
     passages += read_vendor_register(data_dir / "company" / "vendors.json")
     return passages
+
+
+def _read_safely(path: Path) -> list[Passage]:
+    """One document's passages. A broken, oversized or tampered document is skipped and
+    logged, so it cannot stop the service or steer the AI."""
+    if path.stat().st_size > MAX_DOCUMENT_BYTES:
+        log.warning("skipped %s: larger than %d MB", path.name, MAX_DOCUMENT_BYTES // 1_000_000)
+        return []
+    try:
+        passages = _READERS[path.suffix](path)
+    except Exception as error:  # noqa: BLE001 - any reader failure means the file is untrusted
+        log.warning("skipped %s: could not be read (%s)", path.name, error)
+        return []
+    kept = []
+    for passage in passages:
+        phrase = guardrails.instruction_found(passage.text)
+        if phrase:
+            log.warning(
+                "skipped %s: contains instructions to the AI ('%s')", passage.citation, phrase
+            )
+            continue
+        kept.append(passage.model_copy(update={"text": passage.text[:MAX_PASSAGE_CHARS]}))
+    return kept
 
 
 def _fingerprint(passages: list[Passage]) -> str:
