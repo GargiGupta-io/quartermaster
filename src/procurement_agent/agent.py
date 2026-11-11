@@ -11,7 +11,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 from pydantic import BaseModel, ValidationError
 
-from procurement_agent import prompts, verify
+from procurement_agent import guardrails, prompts, verify
 from procurement_agent.knowledge import KnowledgeBase, load_passages
 from procurement_agent.llm import LLMClient, LLMError, ModelUnavailable
 from procurement_agent.rules import offices, plan_stock
@@ -167,6 +167,7 @@ class ProcurementAgent:
 
     def _build(self) -> StateGraph:
         graph = StateGraph(AgentState)
+        graph.add_node("screen", self._screen)
         graph.add_node("understand", self._guarded(self._understand))
         graph.add_node("investigate", self._guarded(self._investigate))
         graph.add_node("answer", self._guarded(self._answer))
@@ -174,7 +175,8 @@ class ProcurementAgent:
         graph.add_node("check", self._guarded(self._check))
         graph.add_node("approval", self._approval)
         graph.add_node("create_order", self._create_order)
-        graph.add_edge(START, "understand")
+        graph.add_edge(START, "screen")
+        graph.add_conditional_edges("screen", lambda s: END if s.get("response") else "understand")
         graph.add_conditional_edges("understand", self._after_understand)
         graph.add_conditional_edges("answer", self._after_answer)
         graph.add_conditional_edges("investigate", self._after_investigate)
@@ -295,6 +297,14 @@ class ProcurementAgent:
     def _is_question(state: AgentState) -> bool:
         parsed = state.get("parsed") or {}
         return bool(parsed.get("is_question")) and not parsed.get("is_purchase_request")
+
+    def _screen(self, state: AgentState) -> dict:
+        """Stop requests that are not requests, or that try to instruct the AI, before it runs."""
+        reason = guardrails.screen_request(state["request_text"])
+        if reason:
+            log.warning("request screened out: %s", reason[:60])
+            return {"response": self._finish(state, "refused", reason)}
+        return {}
 
     def _after_understand(self, state: AgentState) -> str:
         if state.get("response"):
