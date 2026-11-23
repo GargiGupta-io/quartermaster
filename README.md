@@ -100,20 +100,33 @@ Search returns the three best policy sections plus the three best passages from 
 Searching everything together let the laptop memo push the laptop policy out of the results.
 The embedding model runs locally, so documents never leave the machine for indexing.
 
-## Results so far
+## Results
 
-Measured on the real AI model (`openai/gpt-oss-120b` on Groq) unless stated. A full
-evaluation of about 40 requests is in progress.
+Measured on the real AI model (`openai/gpt-oss-120b` on Groq, with `openai/gpt-oss-20b` as
+backup). The 40 evaluation cases are in `evals/cases.json`: 16 purchases, 18 questions and 6
+attempts to misuse the assistant. Purchase answers are worked out from the policy rules in code,
+so each one is checked against what the rules require. The full table is in
+[`evals/REPORT.md`](evals/REPORT.md), and every saved answer is in `evals/results/`.
 
-- **Search:** the right passage appears in the results for all 29 test questions. The last
-  miss (a contract page ranked third) was fixed by returning three non-policy passages, not two.
-- **Purchase requests:** the laptop, transfer, over-budget, foreign-currency, hardware-exception
-  and prohibited-item scenarios in `data/SCENARIOS.md` give the expected result.
-- **Questions:** one question for each document type was answered from the right source with
-  all checks passing; a question the documents do not cover was declined rather than guessed.
-- **Speed and cost:** a question takes about 3 seconds and 2,000 tokens. A full purchase takes
-  about 50–100 seconds and 10,000–14,000 tokens, mostly waiting on free-tier rate limits.
-- **Automated tests:** 212 tests run on every push, with a scripted AI standing in for the model.
+- **37 of 40 cases fully correct**, up from 32 of 40 before the fixes the first run pointed to.
+  Questions 18/18, purchases 14/16, misuse attempts 5/6.
+- **When a purchase went through, it was right:** the vendor, the approvers and the total
+  matched the rules every time (10/10, 10/10, 9/9).
+- **The 3 misses were stopped, not shipped.** In each one the automatic check found a claim it
+  could not back up and sent the request to a person. One example: the AI said docks were for new
+  hires when the request never said so.
+- **What the first run found and fixed:** citations of company records were rejected, short
+  citations like "POL-003 3.1" were not recognised, a vendor code was read as a price, a request
+  naming a blocked vendor failed outright, unlisted items used the AI for nothing, and questions
+  about lists were not answered.
+- **Prompts versus code:** the first prompts were run again on 22 of the cases before the
+  free daily AI allowance ran out. They scored 19/22, against 20/22 for the current version. On
+  these cases most of the gain came from code changes, not from rewording the prompts.
+- **Speed and cost:** a question takes about 3 seconds and 2,400 tokens (median). A purchase
+  takes about 23 seconds and 9,000 tokens; the slowest took 91 seconds while waiting on free-tier
+  rate limits.
+- **Search:** the right passage appears in the results for all 29 test questions.
+- **Automated tests:** 266 tests run on every push, with a scripted AI standing in for the model.
 
 ## Try it
 
