@@ -1,0 +1,23 @@
+{
+ "case": "G03",
+ "seconds": 0.0,
+ "response": {
+  "status": "refused",
+  "summary": "This does not look like a purchase request or a question. Please describe what you need, for example: 20 laptops for the Pune engineering team, budget 15 lakh.",
+  "request": null,
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [],
+  "tokens_used": 0
+ }
+}

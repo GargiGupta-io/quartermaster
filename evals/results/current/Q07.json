@@ -1,0 +1,76 @@
+{
+ "case": "Q07",
+ "seconds": 2.5,
+ "response": {
+  "status": "answered",
+  "summary": "Sahyadri IT Supplies' lead time for the standard laptop is 7 days. This is specified in the vendor rate card for the Standard 14-inch laptop.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "Sahyadri IT Supplies' lead time for the standard laptop",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Lead time (days): 7",
+    "citations": [
+     "PRL-Q4 row 2"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "PRL-Q4 row 2",
+    "title": "Vendor rate card",
+    "source_type": "Spreadsheet",
+    "structured": true,
+    "file": "PRL-Q4-vendor-rate-card.xlsx",
+    "text": "Product code: LAP-STD-14; Product: Standard 14-inch laptop; Vendor ID: V-101; Vendor: Sahyadri IT Supplies; Unit price: 72000; Currency: INR; Lead time (days): 7; Warranty (months): 36"
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2346
+ }
+}

@@ -1,0 +1,40 @@
+{
+ "case": "G06",
+ "seconds": 68.6,
+ "response": {
+  "status": "failed",
+  "summary": "Could not reach a decision that follows policy: V-104 is on probation and this order is over its \u20b9500,000 limit (POL-003 3.1).",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "standard laptops",
+   "sku": "LAP-STD-14",
+   "candidate_skus": [],
+   "quantity": 20,
+   "office": "Pune",
+   "department": "Engineering",
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents",
+   "check_stock",
+   "check_budget",
+   "list_vendor_offers",
+   "evaluate_order"
+  ],
+  "tokens_used": 16762
+ }
+}

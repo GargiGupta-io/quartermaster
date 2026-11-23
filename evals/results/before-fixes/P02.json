@@ -1,0 +1,103 @@
+{
+ "case": "P02",
+ "seconds": 6.4,
+ "response": {
+  "status": "no_purchase_needed",
+  "summary": "Your request for standard laptops can be fulfilled via a stock transfer from Bengaluru to Mumbai. No purchase order is needed.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "standard laptops",
+   "sku": "LAP-STD-14",
+   "candidate_skus": [],
+   "quantity": 10,
+   "office": "Mumbai",
+   "department": "Sales",
+   "budget_inr": 800000.0,
+   "business_reason": null
+  },
+  "stock": {
+   "requested": 10,
+   "from_local_stock": 0,
+   "transfer_from": "Bengaluru",
+   "transfer_quantity": 10,
+   "purchase_quantity": 0
+  },
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Standard laptops are permitted for all employees with a unit price cap of \u20b985,000.",
+    "citations": [
+     "POL-004 section 4.1"
+    ]
+   },
+   {
+    "statement": "Existing stock can be transferred from Bengaluru, so no purchase is required.",
+    "citations": [
+     "check_stock"
+    ]
+   }
+  ],
+  "policy_basis": [
+   {
+    "citation": "POL-001 section 1.2",
+    "heading": "Use existing stock first",
+    "text": "Before buying, stock available at the requested office must be used. Available stock\nmeans units on hand minus units already reserved. Only the shortfall may be purchased.\n\nIf another office has enough available stock to cover the entire shortfall, the\nitems must be transferred rather than bought. A partial transfer is not required."
+   }
+  ],
+  "sources": [
+   {
+    "citation": "POL-004 section 4.1",
+    "title": "IT Hardware Standards",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-004-it-hardware-standards.md",
+    "text": "Price caps are per unit, excluding GST.\n\n- Standard (LAP-STD-14): all employees. Cap \u20b985,000.\n- Engineering (LAP-ENG-16): employees in the Engineering department only. Cap \u20b91,40,000."
+   },
+   {
+    "citation": "check_stock",
+    "title": "Stock levels by office",
+    "source_type": "Company records",
+    "structured": true,
+    "file": "data/company/stock.json",
+    "text": "{\"ok\": true, \"data\": {\"requested\": 10, \"from_local_stock\": 0, \"transfer_from\": \"Bengaluru\", \"transfer_quantity\": 10, \"purchase_quantity\": 0}, \"retryable\": false}"
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents",
+   "check_stock"
+  ],
+  "tokens_used": 6168
+ }
+}

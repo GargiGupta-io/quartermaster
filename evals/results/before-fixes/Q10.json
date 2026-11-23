@@ -1,0 +1,76 @@
+{
+ "case": "Q10",
+ "seconds": 7.6,
+ "response": {
+  "status": "answered",
+  "summary": "For an order of 8 lakh including GST, you need two quotes. This is because the order total falls between \u20b91,00,001 and \u20b910,00,000, which requires two quotes.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "quotes",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "The policy states that orders between \u20b91,00,001 and \u20b910,00,000 require two quotes.",
+    "citations": [
+     "POL-003 section 3.2"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-003 section 3.2",
+    "title": "Vendor Management",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-003-vendor-management.md",
+    "text": "The number of quotes required depends on the order total including GST.\n\n- Up to \u20b91,00,000: one quote.\n- \u20b91,00,001 to \u20b910,00,000: two quotes.\n- Above \u20b910,00,000: three quotes.\n\nQuotes must come from vendors with Approved status that serve the delivery office.\n\nIf fewer qualifying vendors exist than the number required, the order may proceed as a\nsole-source purchase, and the reason must be recorded on the purchase order."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2461
+ }
+}

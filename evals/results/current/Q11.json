@@ -1,0 +1,76 @@
+{
+ "case": "Q11",
+ "seconds": 2.2,
+ "response": {
+  "status": "answered",
+  "summary": "When a vendor bills in US dollars, the price is converted to INR and a 3% buffer is added for exchange\u2011rate movement. The buffered amount is used for budget and approval checks.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "buffer added when a vendor bills in US dollars",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "add a 3% buffer for exchange-rate movement",
+    "citations": [
+     "POL-005 section 5.2"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-005 section 5.2",
+    "title": "Foreign Currency Purchases",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-005-foreign-currency-purchases.md",
+    "text": "Convert the price to INR at the current market rate on the day of the request, then add\na 3% buffer for exchange-rate movement. Budget and approval checks use this buffered\namount plus GST."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2066
+ }
+}

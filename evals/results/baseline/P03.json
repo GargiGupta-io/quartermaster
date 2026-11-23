@@ -1,0 +1,39 @@
+{
+ "case": "P03",
+ "seconds": 23.9,
+ "response": {
+  "status": "failed",
+  "summary": "Could not reach a decision that follows policy: Stock does not cover this: 20 must be purchased.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "monitors",
+   "sku": "MON-27",
+   "candidate_skus": [],
+   "quantity": 20,
+   "office": "Mumbai",
+   "department": "Operations",
+   "budget_inr": 500000.0,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents",
+   "check_stock",
+   "check_budget",
+   "list_vendor_offers"
+  ],
+  "tokens_used": 12115
+ }
+}

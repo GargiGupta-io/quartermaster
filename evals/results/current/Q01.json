@@ -1,0 +1,90 @@
+{
+ "case": "Q01",
+ "seconds": 12.8,
+ "response": {
+  "status": "answered",
+  "summary": "The warranty on Lotus Peak laptops is 24 months. This is specified in the procurement documents and the vendor rate card.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "warranty on Lotus Peak laptops",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Laptops carry a 24-month on-site warranty.",
+    "citations": [
+     "CON-104 page 2"
+    ]
+   },
+   {
+    "statement": "Warranty (months): 24",
+    "citations": [
+     "PRL-Q4 row 5"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "CON-104 page 2",
+    "title": "Lotus Peak supply agreement",
+    "source_type": "PDF",
+    "structured": false,
+    "file": "CON-104-lotus-peak-supply-agreement.pdf",
+    "text": "Prices are fixed in Indian rupees until 31 March 2027 and exclude GST. The Supplier will deliver within 6 calendar days of receiving a purchase order. For each day of late delivery the Buyer may deduct 0.5% of the order value, up to 5%. Laptops carry a 24-month on-site warranty. Faulty units must be replaced within 3 working days."
+   },
+   {
+    "citation": "PRL-Q4 row 5",
+    "title": "Vendor rate card",
+    "source_type": "Spreadsheet",
+    "structured": true,
+    "file": "PRL-Q4-vendor-rate-card.xlsx",
+    "text": "Product code: LAP-STD-14; Product: Standard 14-inch laptop; Vendor ID: V-104; Vendor: Lotus Peak Technologies; Unit price: 69500; Currency: INR; Lead time (days): 6; Warranty (months): 24"
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2376
+ }
+}

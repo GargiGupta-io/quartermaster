@@ -1,0 +1,89 @@
+{
+ "case": "P12",
+ "seconds": 5.1,
+ "response": {
+  "status": "no_purchase_needed",
+  "summary": "Your request for twelve standard laptops has been reviewed. No purchase is required as existing stock can cover the need.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "Twelve standard laptops for Operations in Bengaluru please.",
+   "sku": "LAP-STD-14",
+   "candidate_skus": [],
+   "quantity": 12,
+   "office": "Bengaluru",
+   "department": "Operations",
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": {
+   "requested": 12,
+   "from_local_stock": 12,
+   "transfer_from": null,
+   "transfer_quantity": 0,
+   "purchase_quantity": 0
+  },
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Stock is sufficient to fulfill the request.",
+    "citations": [
+     "check_stock"
+    ]
+   }
+  ],
+  "policy_basis": [
+   {
+    "citation": "POL-001 section 1.2",
+    "heading": "Use existing stock first",
+    "text": "Before buying, stock available at the requested office must be used. Available stock\nmeans units on hand minus units already reserved. Only the shortfall may be purchased.\n\nIf another office has enough available stock to cover the entire shortfall, the\nitems must be transferred rather than bought. A partial transfer is not required."
+   }
+  ],
+  "sources": [
+   {
+    "citation": "check_stock",
+    "title": "Stock levels by office",
+    "source_type": "Company records",
+    "structured": true,
+    "file": "data/company/stock.json",
+    "text": "{\"ok\": true, \"data\": {\"requested\": 12, \"from_local_stock\": 12, \"transfer_from\": null, \"transfer_quantity\": 0, \"purchase_quantity\": 0}, \"retryable\": false}"
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents",
+   "check_stock"
+  ],
+  "tokens_used": 6365
+ }
+}

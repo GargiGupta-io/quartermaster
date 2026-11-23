@@ -1,0 +1,76 @@
+{
+ "case": "Q06",
+ "seconds": 9.5,
+ "response": {
+  "status": "answered",
+  "summary": "The Finance Controller agreed that the Pune network switches could be bought from a single supplier.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "Pune network switches",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": "Pune",
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Finance Controller agreed that the Pune network switches could be bought from a single supplier.",
+    "citations": [
+     "EML-022 message 2"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "EML-022 message 2",
+    "title": "Network switch sourcing",
+    "source_type": "Email thread",
+    "structured": false,
+    "file": "EML-022-network-switch-sourcing.mbox",
+    "text": "From Finance Controller to Priya Nair, Engineering, Wed, 04 Nov 2026 10:00:00 +0530. Yes. No approved Indian supplier carries this switch, so this is a sole-source purchase. Record that reason on the purchase order. Because it is billed in dollars, I will need to approve it myself, and the price must include the currency buffer."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2784
+ }
+}

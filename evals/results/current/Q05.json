@@ -1,0 +1,76 @@
+{
+ "case": "Q05",
+ "seconds": 2.6,
+ "response": {
+  "status": "answered",
+  "summary": "You should return the old laptop to the Bengaluru IT store. It must be returned within 10 working days of receiving the replacement so the data can be wiped and the device reused or recycled.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "return old laptop",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "When a replacement arrives, the old laptop must be returned to the Bengaluru IT store within 10 working days, so its data can be wiped and the device reused or recycled.",
+    "citations": [
+     "MEM-011 paragraph 3"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "MEM-011 paragraph 3",
+    "title": "Laptop refresh and returns, Q4 2026",
+    "source_type": "Word document",
+    "structured": false,
+    "file": "MEM-011-laptop-refresh-and-returns.docx",
+    "text": "When a replacement arrives, the old laptop must be returned to the Bengaluru IT store within 10 working days, so its data can be wiped and the device reused or recycled."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2155
+ }
+}

@@ -1,0 +1,36 @@
+{
+ "case": "Q14",
+ "seconds": 4.9,
+ "response": {
+  "status": "answered",
+  "summary": "The company documents do not answer this. Please ask the procurement desk.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "delivery to Mumbai office",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 1543
+ }
+}

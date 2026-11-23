@@ -1,0 +1,40 @@
+{
+ "case": "P16",
+ "seconds": 0.8,
+ "response": {
+  "status": "needs_clarification",
+  "summary": "A few details are needed before this can be checked.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "10 laptops",
+   "sku": null,
+   "candidate_skus": [
+    "LAP-STD-14",
+    "LAP-ENG-16",
+    "LAP-PRO-16"
+   ],
+   "quantity": 10,
+   "office": "Pune",
+   "department": "Engineering",
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [
+   "Which product do you mean? Standard 14-inch laptop (LAP-STD-14), Engineering 16-inch laptop (LAP-ENG-16), Pro 16-inch laptop (LAP-PRO-16)"
+  ],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [],
+  "tokens_used": 670
+ }
+}

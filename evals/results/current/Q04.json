@@ -1,0 +1,76 @@
+{
+ "case": "Q04",
+ "seconds": 2.6,
+ "response": {
+  "status": "answered",
+  "summary": "Engineering laptops are replaced every three years. This is part of the regular laptop refresh cycle.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "engineering laptops replacement frequency",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Engineering laptops are replaced every 3 years.",
+    "citations": [
+     "MEM-011 paragraph 2"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "MEM-011 paragraph 2",
+    "title": "Laptop refresh and returns, Q4 2026",
+    "source_type": "Word document",
+    "structured": false,
+    "file": "MEM-011-laptop-refresh-and-returns.docx",
+    "text": "Standard laptops are replaced every 4 years and engineering laptops every 3 years. A laptop is replaced early only if IT confirms it cannot be repaired."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2002
+ }
+}

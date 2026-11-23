@@ -1,0 +1,76 @@
+{
+ "case": "Q15",
+ "seconds": 2.5,
+ "response": {
+  "status": "answered",
+  "summary": "Lotus Peak's probation ends on 31 March 2027. The agreement also allows early termination by written notice.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "When does Lotus Peak's probation end?",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "The agreement states that the Supplier is on probation until 31 March 2027.",
+    "citations": [
+     "CON-104 page 1"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "CON-104 page 1",
+    "title": "Lotus Peak supply agreement",
+    "source_type": "PDF",
+    "structured": false,
+    "file": "CON-104-lotus-peak-supply-agreement.pdf",
+    "text": "Kestrel Works Pvt Ltd is a fictional company. This document is sample data. This agreement is between Kestrel Works Pvt Ltd (the Buyer) and Lotus Peak Technologies (vendor V-104, the Supplier). It starts on 1 October 2026. The Supplier is on probation with the Buyer until 31 March 2027. During probation the Buyer reviews delivery and quality every quarter, and may end probation early by written notice. The Supplier may deliver to the Buyer's Pune and Bengaluru offices only."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2559
+ }
+}

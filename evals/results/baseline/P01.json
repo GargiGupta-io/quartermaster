@@ -1,0 +1,164 @@
+{
+ "case": "P01",
+ "seconds": 75.4,
+ "response": {
+  "status": "ready_for_approval",
+  "summary": "We will purchase the required laptops for the new Engineering hires. The order will be placed with the approved vendor.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "standard laptops",
+   "sku": "LAP-STD-14",
+   "candidate_skus": [],
+   "quantity": 20,
+   "office": "Pune",
+   "department": "Engineering",
+   "budget_inr": 1500000.0,
+   "business_reason": "new Engineering hires"
+  },
+  "stock": {
+   "requested": 20,
+   "from_local_stock": 4,
+   "transfer_from": null,
+   "transfer_quantity": 0,
+   "purchase_quantity": 16
+  },
+  "order": {
+   "stock": {
+    "requested": 20,
+    "from_local_stock": 4,
+    "transfer_from": null,
+    "transfer_quantity": 0,
+    "purchase_quantity": 16
+   },
+   "vendor_id": "V-101",
+   "vendor_name": "Sahyadri IT Supplies",
+   "currency": "INR",
+   "unit_price": 72000.0,
+   "fx_rate": null,
+   "unit_price_inr": 72000.0,
+   "subtotal_inr": 1152000.0,
+   "gst_inr": 207360.0,
+   "total_inr": 1359360.0,
+   "budget_remaining_inr": 1950000.0,
+   "over_budget": false,
+   "hardware_exception": false,
+   "required_approvers": [
+    "Department Head",
+    "Finance Controller"
+   ],
+   "quotes_required": 3,
+   "qualifying_vendors": [
+    "V-101",
+    "V-102",
+    "V-103",
+    "V-105"
+   ],
+   "sole_source": false,
+   "lowest_eligible_vendor": "V-101",
+   "blocking_problems": [],
+   "justification_required": []
+  },
+  "reasons": [
+   {
+    "statement": "The requested Standard laptop (LAP-STD-14) is within the price cap for all employees as defined in POL-004 section 4.1.",
+    "citations": [
+     "POL-004 section 4.1"
+    ]
+   },
+   {
+    "statement": "No hardware exception is needed because the laptop tier matches the employee department and stays under the cap, per POL-004 section 4.2.",
+    "citations": [
+     "POL-004 section 4.2"
+    ]
+   }
+  ],
+  "policy_basis": [
+   {
+    "citation": "POL-001 section 1.2",
+    "heading": "Use existing stock first",
+    "text": "Before buying, stock available at the requested office must be used. Available stock\nmeans units on hand minus units already reserved. Only the shortfall may be purchased.\n\nIf another office has enough available stock to cover the entire shortfall, the\nitems must be transferred rather than bought. A partial transfer is not required."
+   },
+   {
+    "citation": "POL-001 section 1.4",
+    "heading": "Tax",
+    "text": "All approval limits and budget checks use the total including GST. GST is charged at\n18% on all goods in this policy unless the purchase order states otherwise."
+   },
+   {
+    "citation": "POL-002 section 2.1",
+    "heading": "Approval limits",
+    "text": "Approval depends on the order total including GST. Each level includes the approvers\nnamed for that level only.\n\n- Up to \u20b950,000: Line Manager.\n- \u20b950,001 to \u20b95,00,000: Department Head.\n- \u20b95,00,001 to \u20b925,00,000: Department Head and Finance Controller.\n- Above \u20b925,00,000: Department Head, Finance Controller and CFO."
+   },
+   {
+    "citation": "POL-003 section 3.2",
+    "heading": "Competitive quotes",
+    "text": "The number of quotes required depends on the order total including GST.\n\n- Up to \u20b91,00,000: one quote.\n- \u20b91,00,001 to \u20b910,00,000: two quotes.\n- Above \u20b910,00,000: three quotes.\n\nQuotes must come from vendors with Approved status that serve the delivery office.\n\nIf fewer qualifying vendors exist than the number required, the order may proceed as a\nsole-source purchase, and the reason must be recorded on the purchase order."
+   },
+   {
+    "citation": "POL-003 section 3.3",
+    "heading": "Vendor selection",
+    "text": "Among vendors eligible for the order, the lowest price excluding GST must be chosen.\nA higher-priced vendor may be chosen only if the lowest-priced vendor cannot meet a\ndelivery date stated in the request, and the reason must be recorded."
+   }
+  ],
+  "sources": [
+   {
+    "citation": "POL-004 section 4.1",
+    "title": "IT Hardware Standards",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-004-it-hardware-standards.md",
+    "text": "Price caps are per unit, excluding GST.\n\n- Standard (LAP-STD-14): all employees. Cap \u20b985,000.\n- Engineering (LAP-ENG-16): employees in the Engineering department only. Cap \u20b91,40,000."
+   },
+   {
+    "citation": "POL-004 section 4.2",
+    "title": "IT Hardware Standards",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-004-it-hardware-standards.md",
+    "text": "A laptop above the cap for its tier, or a tier the employee's department is not entitled\nto, requires a hardware exception approved by the CIO. The request must state a business\nreason. LAP-PRO-16 is above every cap and always requires an exception."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [
+   "Department Head",
+   "Finance Controller"
+  ],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents",
+   "check_stock",
+   "check_budget",
+   "list_vendor_offers",
+   "evaluate_order"
+  ],
+  "tokens_used": 15932
+ }
+}

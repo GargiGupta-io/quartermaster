@@ -1,0 +1,85 @@
+{
+ "case": "Q02",
+ "seconds": 12.7,
+ "response": {
+  "status": "answered",
+  "summary": "The maximum single purchase order we can place with Lotus Peak while they are on probation is \u20b95,00,000 including GST. This limit applies to each individual order. Orders cannot be split to stay under the limit.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "largest single order we can place with Lotus Peak while they are on probation",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Probation status allows orders up to \u20b95,00,000 including GST per order.",
+    "citations": [
+     "POL-003 section 3.1",
+     "CON-104 page 3"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-003 section 3.1",
+    "title": "Vendor Management",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-003-vendor-management.md",
+    "text": "- Approved: may receive orders of any value.\n- Probation: may receive orders up to \u20b95,00,000 including GST per order.\n- Suspended: may not receive orders or be used as a quote.\n\nVendors not on the vendor list may not receive orders."
+   },
+   {
+    "citation": "CON-104 page 3",
+    "title": "Lotus Peak supply agreement",
+    "source_type": "PDF",
+    "structured": false,
+    "file": "CON-104-lotus-peak-supply-agreement.pdf",
+    "text": "While on probation, a single purchase order may not exceed INR 5,00,000 including GST. Orders may not be split to stay under this limit. Either party may end this agreement with 30 days' written notice. The Buyer may end it immediately if the Supplier is suspended under the Buyer's vendor policy. Signed for the Buyer by the Head of Procurement, and for the Supplier by its Director of Sales."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2409
+ }
+}

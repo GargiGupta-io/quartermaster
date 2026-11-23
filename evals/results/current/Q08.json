@@ -1,0 +1,76 @@
+{
+ "case": "Q08",
+ "seconds": 3.4,
+ "response": {
+  "status": "answered",
+  "summary": "The vendor currently suspended is Quickline Resellers (Vendor V-106). It is listed as suspended and therefore may not receive orders or be used as a quote.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "Which vendor is currently suspended?",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Quickline Resellers: Vendor V-106 Quickline Resellers. Status: suspended.",
+    "citations": [
+     "REG-VND record V-106"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "REG-VND record V-106",
+    "title": "Vendor Register",
+    "source_type": "Database record",
+    "structured": true,
+    "file": "vendors.json",
+    "text": "Vendor V-106 Quickline Resellers. Status: suspended. Bills in INR. Delivers to Pune, Mumbai, Bengaluru."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2167
+ }
+}

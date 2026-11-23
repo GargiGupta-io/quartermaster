@@ -1,0 +1,76 @@
+{
+ "case": "P14",
+ "seconds": 17.0,
+ "response": {
+  "status": "refused",
+  "summary": "The request cannot be approved because gift cards are a prohibited purchase. Procurement policy does not allow buying them under any circumstances.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "gift cards",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": "Sales",
+   "budget_inr": 40000.0,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Prohibited purchases rule applies: gift cards may not be purchased through procurement under any circumstances",
+    "citations": [
+     "POL-001 section 1.5"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-001 section 1.5",
+    "title": "Procurement Policy",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-001-procurement-policy.md",
+    "text": "The following may not be purchased through procurement under any circumstances:\ngift cards and vouchers, cryptocurrency, personal items for employees, and alcohol."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 4451
+ }
+}

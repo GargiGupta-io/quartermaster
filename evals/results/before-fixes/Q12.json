@@ -1,0 +1,76 @@
+{
+ "case": "Q12",
+ "seconds": 3.3,
+ "response": {
+  "status": "answered",
+  "summary": "The price cap for a standard laptop (LAP-STD-14) is \u20b985,000 per unit, excluding GST. This cap applies to all employees.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "price cap for a standard laptop",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Standard (LAP-STD-14): all employees. Cap \u20b985,000.",
+    "citations": [
+     "POL-004 section 4.1"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-004 section 4.1",
+    "title": "IT Hardware Standards",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-004-it-hardware-standards.md",
+    "text": "Price caps are per unit, excluding GST.\n\n- Standard (LAP-STD-14): all employees. Cap \u20b985,000.\n- Engineering (LAP-ENG-16): employees in the Engineering department only. Cap \u20b91,40,000."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2219
+ }
+}

@@ -1,0 +1,76 @@
+{
+ "case": "Q09",
+ "seconds": 3.4,
+ "response": {
+  "status": "answered",
+  "summary": "An order of 30\u202flakh must be approved by the Department Head, the Finance Controller, and the CFO.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": "approval process for a 30 lakh order",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": 3000000.0,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "Above \u20b925,00,000: Department Head, Finance Controller and CFO.",
+    "citations": [
+     "POL-002 section 2.1"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-002 section 2.1",
+    "title": "Approval Matrix",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-002-approval-matrix.md",
+    "text": "Approval depends on the order total including GST. Each level includes the approvers\nnamed for that level only.\n\n- Up to \u20b950,000: Line Manager.\n- \u20b950,001 to \u20b95,00,000: Department Head.\n- \u20b95,00,001 to \u20b925,00,000: Department Head and Finance Controller.\n- Above \u20b925,00,000: Department Head, Finance Controller and CFO."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2593
+ }
+}

@@ -1,0 +1,90 @@
+{
+ "case": "Q16",
+ "seconds": 8.0,
+ "response": {
+  "status": "answered",
+  "summary": "No, you cannot split a large order into smaller ones to reduce the required approvals. Both the procurement policy and contract terms prohibit splitting orders to stay under approval limits.",
+  "request": {
+   "is_purchase_request": false,
+   "is_question": true,
+   "item": null,
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": null,
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "An order must not be split into smaller orders to fall under a lower approval limit. Items requested together for the same purpose count as one order.",
+    "citations": [
+     "POL-002 section 2.3"
+    ]
+   },
+   {
+    "statement": "Orders may not be split to stay under this limit.",
+    "citations": [
+     "CON-104 page 3"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-002 section 2.3",
+    "title": "Approval Matrix",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-002-approval-matrix.md",
+    "text": "An order must not be split into smaller orders to fall under a lower approval limit.\nItems requested together for the same purpose count as one order."
+   },
+   {
+    "citation": "CON-104 page 3",
+    "title": "Lotus Peak supply agreement",
+    "source_type": "PDF",
+    "structured": false,
+    "file": "CON-104-lotus-peak-supply-agreement.pdf",
+    "text": "While on probation, a single purchase order may not exceed INR 5,00,000 including GST. Orders may not be split to stay under this limit. Either party may end this agreement with 30 days' written notice. The Buyer may end it immediately if the Supplier is suspended under the Buyer's vendor policy. Signed for the Buyer by the Head of Procurement, and for the Supplier by its Director of Sales."
+   }
+  ],
+  "verification": {
+   "passed": true,
+   "checks": [
+    {
+     "name": "figures",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "citations",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "vendors",
+     "passed": true,
+     "detail": ""
+    },
+    {
+     "name": "support",
+     "passed": true,
+     "detail": ""
+    }
+   ]
+  },
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [
+   "search_documents"
+  ],
+  "tokens_used": 2785
+ }
+}

@@ -1,0 +1,36 @@
+{
+ "case": "P15",
+ "seconds": 0.9,
+ "response": {
+  "status": "needs_clarification",
+  "summary": "'standing desks' is not in the company catalogue, so it cannot be ordered here. The procurement desk can add new items.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "standing desks",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": 15,
+   "office": "Pune",
+   "department": "Engineering",
+   "budget_inr": null,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [],
+  "policy_basis": [],
+  "sources": [],
+  "verification": null,
+  "warnings": [],
+  "questions": [
+   "Would a product from the catalogue meet the need instead?"
+  ],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [],
+  "tokens_used": 559
+ }
+}

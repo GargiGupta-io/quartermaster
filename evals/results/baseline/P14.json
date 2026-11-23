@@ -1,0 +1,50 @@
+{
+ "case": "P14",
+ "seconds": 1.0,
+ "response": {
+  "status": "refused",
+  "summary": "This cannot be bought: company policy does not allow gift cards and vouchers to be purchased through procurement.",
+  "request": {
+   "is_purchase_request": true,
+   "is_question": false,
+   "item": "gift cards",
+   "sku": null,
+   "candidate_skus": [],
+   "quantity": null,
+   "office": null,
+   "department": "Sales",
+   "budget_inr": 40000.0,
+   "business_reason": null
+  },
+  "stock": null,
+  "order": null,
+  "reasons": [
+   {
+    "statement": "POL-001 prohibits buying gift cards and vouchers through procurement.",
+    "citations": [
+     "POL-001 section 1.5"
+    ]
+   }
+  ],
+  "policy_basis": [],
+  "sources": [
+   {
+    "citation": "POL-001 section 1.5",
+    "title": "Procurement Policy",
+    "source_type": "Policy document",
+    "structured": false,
+    "file": "POL-001-procurement-policy.md",
+    "text": "The following may not be purchased through procurement under any circumstances:\ngift cards and vouchers, cryptocurrency, personal items for employees, and alcohol."
+   }
+  ],
+  "verification": null,
+  "warnings": [],
+  "questions": [],
+  "pending_approvers": [],
+  "decisions": [],
+  "approval_error": null,
+  "purchase_order": null,
+  "tools_used": [],
+  "tokens_used": 580
+ }
+}
