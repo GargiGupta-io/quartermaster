@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quartermaster: one-page summary</title>
+<style>
+  @page { size: A4; margin: 14mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font: 10.2pt/1.42 "Helvetica Neue", Arial, sans-serif; color: #1c2430; margin: 0; }
+  h1 { font-size: 19pt; margin: 0; color: #0f2a4a; }
+  .sub { color: #4a5668; margin: 2px 0 10px; }
+  h2 { font-size: 11pt; color: #0f2a4a; margin: 11px 0 4px; padding-bottom: 2px;
+       border-bottom: 1.5px solid #d6dde8; }
+  p { margin: 0 0 5px; }
+  ul { margin: 0 0 4px; padding-left: 16px; }
+  li { margin-bottom: 2px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 6px; }
+  .flow span { background: #eef3f9; border: 1px solid #c9d6e6; border-radius: 4px;
+               padding: 2px 7px; font-size: 9.2pt; }
+  .flow b { color: #7a8799; font-weight: normal; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.4pt; margin: 3px 0 4px; }
+  td, th { border: 1px solid #d6dde8; padding: 3px 6px; text-align: left; }
+  th { background: #eef3f9; }
+  .num { font-weight: bold; color: #0f2a4a; }
+  .foot { margin-top: 9px; font-size: 8.6pt; color: #6a7688; }
+</style>
+</head>
+<body>
+<h1>Quartermaster</h1>
+<p class="sub">An AI procurement assistant with human approval. Project 12 prerequisite, built by Gargi Gupta.
+Live at quartermaster-a2cb.onrender.com.</p>
+
+<h2>The problem</h2>
+<p>A request such as "20 laptops for the new Engineering hires in Pune" takes a procurement team several
+checks: whether stock or another office can cover it, which vendors are allowed, the cheapest valid
+price, tax and currency, the department budget, and who must sign off. Each check is a chance to
+miss a rule. An AI can do this legwork fast, but it must not be trusted to invent figures, skip a
+rule or place an order on its own.</p>
+
+<h2>What it does</h2>
+<div class="cols">
+<ul>
+  <li><b>Purchase requests:</b> works out stock, transfer or purchase, the vendor, the total
+      with GST, and the approvers, with policy reasons and sources.</li>
+  <li><b>Questions</b> about policies, contracts and vendors, answered with the exact page,
+      row or email cited, or declined if the documents do not cover it.</li>
+</ul>
+<ul>
+  <li><b>Missing details</b> become questions back to the employee; forbidden items are refused.</li>
+  <li><b>Nothing is bought</b> until every required approver approves on the page.</li>
+</ul>
+</div>
+
+<h2>How it works</h2>
+<div class="flow">
+  <span>Screen the request</span><b>&rarr;</b><span>Understand</span><b>&rarr;</b>
+  <span>Investigate with tools</span><b>&rarr;</b><span>Draft decision</span><b>&rarr;</b>
+  <span>Check figures, sources, support</span><b>&rarr;</b><span>Pause for approvers</span><b>&rarr;</b>
+  <span>Create order</span>
+</div>
+<ul>
+  <li><b>The AI proposes; code decides.</b> Totals, tax, currency, approval levels and vendor rules
+      come from code. The AI never sees the tool that creates orders.</li>
+  <li><b>Enterprise knowledge:</b> 11 documents in 6 formats (policies, PDF contract, Word memo, email
+      thread, spreadsheet rate card, vendor database) in one search index with exact citations.</li>
+  <li><b>Hallucination checks:</b> every figure, vendor and citation is checked against the records,
+      and a second AI call confirms each cited passage supports its claim. Anything unsupported goes
+      to a person instead of the employee.</li>
+  <li><b>Failure handling:</b> a backup AI model, screening of requests that try to instruct the AI,
+      safe loading of broken or tampered documents, and usage limits per visitor and per day.</li>
+</ul>
+
+<h2>Results (40-case evaluation on the real AI model)</h2>
+<table>
+  <tr><th>Measure</th><th>Before fixes</th><th>Final</th></tr>
+  <tr><td>Cases fully correct</td><td>32 / 40</td><td class="num">37 / 40</td></tr>
+  <tr><td>Questions / purchases / misuse attempts</td><td>16/18 &middot; 12/16 &middot; 4/6</td><td class="num">18/18 &middot; 14/16 &middot; 5/6</td></tr>
+  <tr><td>Right vendor, approvers and total (when ordered)</td><td>9/10 &middot; 9/10 &middot; 8/9</td><td class="num">10/10 &middot; 10/10 &middot; 9/9</td></tr>
+  <tr><td>Median time per AI case</td><td>11.2 s</td><td class="num">5.1 s</td></tr>
+</table>
+<p>All 3 remaining misses were caught by the checks and sent to a person; none reached the employee
+as a wrong answer. The first run exposed six bugs, all fixed. Rerunning the original prompts on 22 cases
+scored 19/22 against 20/22, so most of the gain came from code, not prompt wording. 266 automated tests
+run on every push.</p>
+
+<h2>Built with, and limits</h2>
+<p>All free: LangGraph, Groq (gpt-oss-120b, backup gpt-oss-20b), fastembed and Chroma, FastAPI, SQLite,
+Docker on Render, GitHub Actions. Limits: one product per request; free-tier AI allowance causes waits;
+the free server sleeps and forgets requests on restart; the company and its data are fictional.</p>
+
+<p class="foot">Kestrel Works, its policies, vendors and figures are fictional. No real orders are placed.</p>
+</body>
+</html>
