@@ -5,7 +5,7 @@ reads a plain-English request, checks company policy, stock, prices and budget, 
 an order that the right managers approve before anything is bought. It also answers questions
 about company policies, contracts and vendors, always showing where the answer came from.
 
-Built for Project 12: an agentic AI workflow with enterprise knowledge retrieval, tool use,
+Built for Project 7: an agentic AI workflow with enterprise knowledge retrieval, tool use,
 human approval, hallucination checks, evaluation and a production-ready service.
 
 > Kestrel Works, its policies, vendors and figures are fictional. No real orders are placed.
